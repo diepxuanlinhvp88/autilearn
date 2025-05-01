@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../data/models/quiz_model.dart';
 import '../../../main.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
@@ -103,56 +104,284 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildHomeTab(Authenticated authState) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Xin chào, ${authState.user.displayName ?? 'Người dùng'}!',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          // Header with welcome message and avatar
+          Container(
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Xin chào,',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          authState.user.displayName ?? 'Người dùng',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.blue.shade100,
+                      child: Text(
+                        (authState.user.displayName?.isNotEmpty ?? false)
+                            ? authState.user.displayName![0].toUpperCase()
+                            : 'A',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Hãy cùng học hôm nay!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Các loại bài học',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+
+          // Categories section
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Các loại bài học',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Quiz type cards in a grid
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 15,
+                  childAspectRatio: 0.9,
+                  children: [
+                    _buildQuizTypeCardNew(
+                      title: 'Bài học lựa chọn',
+                      icon: Icons.check_circle,
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
+                      },
+                    ),
+                    _buildQuizTypeCardNew(
+                      title: 'Bài học ghép đôi',
+                      icon: Icons.compare_arrows,
+                      color: Colors.green,
+                      onTap: () {
+                        Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
+                      },
+                    ),
+                    _buildQuizTypeCardNew(
+                      title: 'Bài học sắp xếp',
+                      icon: Icons.sort,
+                      color: Colors.orange,
+                      onTap: () {
+                        Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+                      },
+                    ),
+                    _buildQuizTypeCardNew(
+                      title: 'Bài học mới',
+                      icon: Icons.lightbulb,
+                      color: Colors.purple,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Tính năng đang phát triển'),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Recent activities section
+                const Text(
+                  'Hoạt động gần đây',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Activity cards
+                _buildActivityCard(
+                  title: 'Bài học lựa chọn: Động vật',
+                  subtitle: 'Hoàn thành: 80%',
+                  icon: Icons.check_circle,
+                  color: Colors.blue,
+                  progress: 0.8,
+                ),
+                const SizedBox(height: 12),
+                _buildActivityCard(
+                  title: 'Bài học ghép đôi: Màu sắc',
+                  subtitle: 'Hoàn thành: 60%',
+                  icon: Icons.compare_arrows,
+                  color: Colors.green,
+                  progress: 0.6,
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          _buildQuizTypeCard(
-            title: 'Bài học lựa chọn',
-            description: 'Chọn hình ảnh phù hợp với câu hỏi',
-            icon: Icons.check_circle,
-            color: Colors.blue,
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
-            },
-          ),
-          const SizedBox(height: 16),
-          _buildQuizTypeCard(
-            title: 'Bài học ghép đôi',
-            description: 'Nối cặp hình ảnh hoặc từ vựng với định nghĩa',
-            icon: Icons.compare_arrows,
-            color: Colors.green,
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
-            },
-          ),
-          const SizedBox(height: 16),
-          _buildQuizTypeCard(
-            title: 'Bài học sắp xếp',
-            description: 'Sắp xếp các hình ảnh theo đúng trình tự',
-            icon: Icons.sort,
-            color: Colors.orange,
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
-            },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuizTypeCardNew({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required double progress,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              borderRadius: BorderRadius.circular(4),
+              minHeight: 8,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -228,164 +457,100 @@ class _HomePageState extends State<HomePage> {
           );
         } else if (state is QuizzesLoaded) {
           if (state.quizzes.isEmpty) {
-            return const Center(
-              child: Text('Không có bài học nào'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/empty_lessons.png',
+                    height: 150,
+                    width: 150,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Chưa có bài học nào',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Hãy khám phá các bài học ở trang chủ',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
             );
           }
 
-          return ListView.builder(
+          // Group quizzes by category
+          final Map<String?, List<QuizModel>> quizzesByCategory = {};
+          for (final quiz in state.quizzes) {
+            if (!quizzesByCategory.containsKey(quiz.category)) {
+              quizzesByCategory[quiz.category] = [];
+            }
+            quizzesByCategory[quiz.category]!.add(quiz);
+          }
+
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            itemCount: state.quizzes.length,
-            itemBuilder: (context, index) {
-              final quiz = state.quizzes[index];
-              IconData quizIcon;
-              Color quizColor;
-
-              switch (quiz.type) {
-                case AppConstants.choicesQuiz:
-                  quizIcon = Icons.check_circle;
-                  quizColor = Colors.blue;
-                  break;
-                case AppConstants.pairingQuiz:
-                  quizIcon = Icons.compare_arrows;
-                  quizColor = Colors.green;
-                  break;
-                case AppConstants.sequentialQuiz:
-                  quizIcon = Icons.sort;
-                  quizColor = Colors.orange;
-                  break;
-                default:
-                  quizIcon = Icons.quiz;
-                  quizColor = Colors.purple;
-              }
-
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: InkWell(
-                  onTap: () {
-                    // Navigate to the appropriate quiz page
-                    switch (quiz.type) {
-                      case AppConstants.choicesQuiz:
-                        Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
-                        break;
-                      case AppConstants.pairingQuiz:
-                        Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
-                        break;
-                      case AppConstants.sequentialQuiz:
-                        Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
-                        break;
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Search bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
                     children: [
-                      if (quiz.imageUrl != null)
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(12),
-                          ),
-                          child: Image.network(
-                            quiz.imageUrl!,
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(quizIcon, color: quizColor),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _getQuizTypeText(quiz.type),
-                                  style: TextStyle(
-                                    color: quizColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getDifficultyColor(quiz.difficulty)
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    _getDifficultyText(quiz.difficulty),
-                                    style: TextStyle(
-                                      color: _getDifficultyColor(quiz.difficulty),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              quiz.title,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              quiz.description,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.question_answer,
-                                  size: 16,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${quiz.questionCount} câu hỏi',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Icon(
-                                  Icons.child_care,
-                                  size: 16,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${quiz.ageRangeMin}-${quiz.ageRangeMax} tuổi',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      Icon(Icons.search, color: Colors.grey.shade600),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Tìm kiếm bài học...',
+                        style: TextStyle(color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 24),
+
+                // Categories
+                ...quizzesByCategory.entries.map((entry) {
+                  final category = entry.key ?? 'Khác';
+                  final categoryQuizzes = entry.value;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        category,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 220,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: categoryQuizzes.length,
+                          itemBuilder: (context, index) {
+                            final quiz = categoryQuizzes[index];
+                            return _buildQuizCard(context, quiz);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                }).toList(),
+              ],
+            ),
           );
         } else if (state is QuizError) {
           return Center(
@@ -397,6 +562,180 @@ class _HomePageState extends State<HomePage> {
           child: Text('Không có dữ liệu'),
         );
       },
+    );
+  }
+
+  Widget _buildQuizCard(BuildContext context, QuizModel quiz) {
+    IconData quizIcon;
+    Color quizColor;
+
+    switch (quiz.type) {
+      case AppConstants.choicesQuiz:
+        quizIcon = Icons.check_circle;
+        quizColor = Colors.blue;
+        break;
+      case AppConstants.pairingQuiz:
+        quizIcon = Icons.compare_arrows;
+        quizColor = Colors.green;
+        break;
+      case AppConstants.sequentialQuiz:
+        quizIcon = Icons.sort;
+        quizColor = Colors.orange;
+        break;
+      default:
+        quizIcon = Icons.quiz;
+        quizColor = Colors.purple;
+    }
+
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          // Navigate to the appropriate quiz page
+          switch (quiz.type) {
+            case AppConstants.choicesQuiz:
+              Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
+              break;
+            case AppConstants.pairingQuiz:
+              Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
+              break;
+            case AppConstants.sequentialQuiz:
+              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+              break;
+          }
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Quiz image
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: quiz.imageUrl != null
+                ? Image.network(
+                    quiz.imageUrl!,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    height: 120,
+                    width: double.infinity,
+                    color: quizColor.withOpacity(0.2),
+                    child: Icon(
+                      quizIcon,
+                      size: 40,
+                      color: quizColor,
+                    ),
+                  ),
+            ),
+            // Quiz info
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quiz type and difficulty
+                  Row(
+                    children: [
+                      Icon(quizIcon, size: 16, color: quizColor),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          _getQuizTypeText(quiz.type),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: quizColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getDifficultyColor(quiz.difficulty).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _getDifficultyText(quiz.difficulty),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _getDifficultyColor(quiz.difficulty),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Quiz title
+                  Text(
+                    quiz.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Quiz stats
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.question_answer,
+                        size: 12,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${quiz.questionCount}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.child_care,
+                        size: 12,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${quiz.ageRangeMin}-${quiz.ageRangeMax}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -72,7 +72,26 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                         backgroundColor: Colors.green,
                       ),
                     );
-                    Navigator.of(context).pushReplacementNamed(AppRouter.manageQuizzes);
+
+                    // Navigate to question list page for the new quiz
+                    if (state.message.contains('created successfully')) {
+                      // Extract quiz ID from the state
+                      final quizId = state.data as String?;
+                      if (quizId != null) {
+                        Navigator.of(context).pushReplacementNamed(
+                          AppRouter.questionList,
+                          arguments: {
+                            'quizId': quizId,
+                            'quizTitle': _titleController.text.trim(),
+                            'quizType': _selectedType,
+                          },
+                        );
+                      } else {
+                        Navigator.of(context).pushReplacementNamed(AppRouter.manageQuizzes);
+                      }
+                    } else {
+                      Navigator.of(context).pushReplacementNamed(AppRouter.manageQuizzes);
+                    }
                   } else if (state is QuizError) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

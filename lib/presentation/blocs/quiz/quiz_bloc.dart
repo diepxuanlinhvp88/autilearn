@@ -59,7 +59,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
 
     result.fold(
       (error) => emit(QuizError(error)),
-      (quizId) => emit(QuizOperationSuccess('Quiz created successfully')),
+      (quizId) => emit(QuizOperationSuccess('Quiz created successfully', data: quizId)),
     );
   }
 

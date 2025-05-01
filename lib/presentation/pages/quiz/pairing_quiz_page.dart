@@ -6,6 +6,8 @@ import '../../../presentation/blocs/quiz/quiz_bloc.dart';
 import '../../../presentation/blocs/quiz/quiz_event.dart';
 import '../../../presentation/blocs/quiz/quiz_state.dart';
 import '../../../presentation/widgets/quiz/pairing_item_card.dart';
+import '../../../core/services/audio_service.dart';
+import '../../../presentation/widgets/common/confetti_animation.dart';
 
 class PairingQuizPage extends StatefulWidget {
   const PairingQuizPage({super.key});
@@ -21,12 +23,14 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
   int _score = 0;
   int _totalQuestions = 0;
   List<QuestionModel> _questions = [];
-  
+
   // Pairing state
   String? _selectedLeftItemId;
   String? _selectedRightItemId;
   Map<String, String> _userPairs = {};
-  
+
+  final AudioService _audioService = getIt<AudioService>();
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<QuizBloc>(
@@ -34,6 +38,21 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học ghép đôi'),
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Nối cặp hình ảnh hoặc từ vựng với định nghĩa'),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: BlocConsumer<QuizBloc, QuizState>(
           listener: (context, state) {
@@ -63,13 +82,13 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
               }
 
               final currentQuestion = _questions[_currentQuestionIndex];
-              
+
               // Split options into left and right columns
-              final leftOptions = currentQuestion.options.where((option) => 
+              final leftOptions = currentQuestion.options.where((option) =>
                 option.id.startsWith('L')).toList();
-              final rightOptions = currentQuestion.options.where((option) => 
+              final rightOptions = currentQuestion.options.where((option) =>
                 option.id.startsWith('R')).toList();
-              
+
               return Column(
                 children: [
                   // Progress indicator
@@ -173,10 +192,10 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
                                       final isPaired = _userPairs.containsKey(option.id);
                                       final isSelected = option.id == _selectedLeftItemId;
                                       final pairedRightId = _userPairs[option.id];
-                                      final isCorrectPair = _isAnswerChecked && 
+                                      final isCorrectPair = _isAnswerChecked &&
                                         currentQuestion.correctPairs?[option.id] == pairedRightId;
                                       final isWrongPair = _isAnswerChecked && isPaired && !isCorrectPair;
-                                      
+
                                       return Padding(
                                         padding: const EdgeInsets.only(bottom: 8.0),
                                         child: PairingItemCard(
@@ -229,12 +248,12 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
                                       final isPaired = _userPairs.containsValue(option.id);
                                       final isSelected = option.id == _selectedRightItemId;
                                       final pairedLeftId = _userPairs.entries
-                                        .firstWhere((entry) => entry.value == option.id, 
+                                        .firstWhere((entry) => entry.value == option.id,
                                           orElse: () => const MapEntry('', '')).key;
-                                      final isCorrectPair = _isAnswerChecked && 
+                                      final isCorrectPair = _isAnswerChecked &&
                                         currentQuestion.correctPairs?[pairedLeftId] == option.id;
                                       final isWrongPair = _isAnswerChecked && isPaired && !isCorrectPair;
-                                      
+
                                       return Padding(
                                         padding: const EdgeInsets.only(bottom: 8.0),
                                         child: PairingItemCard(
@@ -367,19 +386,22 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
                                       // Check answer
                                       final correctPairs = currentQuestion.correctPairs ?? {};
                                       bool allCorrect = true;
-                                      
+
                                       for (final entry in _userPairs.entries) {
                                         if (correctPairs[entry.key] != entry.value) {
                                           allCorrect = false;
                                           break;
                                         }
                                       }
-                                      
+
                                       setState(() {
                                         _isAnswerChecked = true;
                                         _isCorrect = allCorrect;
                                         if (allCorrect) {
                                           _score++;
+                                          _audioService.playCorrectSound();
+                                        } else {
+                                          _audioService.playWrongSound();
                                         }
                                       });
                                     }
@@ -416,36 +438,100 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
   }
 
   void _showCompletionDialog() {
+    // Play success sound
+    _audioService.playSuccessSound();
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Hoàn thành bài học!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.celebration,
-              color: Colors.amber,
-              size: 64,
+      builder: (context) => ConfettiAnimation(
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Hoàn thành bài học!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Điểm của bạn: $_score/$_totalQuestions',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Trophy animation
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: Colors.green,
+                    size: 64,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tỷ lệ đúng: ${(_score / _totalQuestions * 100).toStringAsFixed(0)}%',
-              style: const TextStyle(
-                fontSize: 16,
+              const SizedBox(height: 24),
+              // Score animation
+              TweenAnimationBuilder<int>(
+                tween: IntTween(begin: 0, end: _score),
+                duration: const Duration(milliseconds: 1500),
+                builder: (context, value, child) {
+                  return Text(
+                    'Điểm của bạn: $value/$_totalQuestions',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 12),
+              // Percentage animation
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: _score / _totalQuestions),
+                duration: const Duration(milliseconds: 1500),
+                builder: (context, value, child) {
+                  return Column(
+                    children: [
+                      Text(
+                        'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(value)),
+                          minHeight: 10,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         actions: [
           TextButton(
             onPressed: () {
@@ -471,7 +557,17 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
           ),
         ],
       ),
-    );
+    ));
+  }
+
+  Color _getScoreColor(double percentage) {
+    if (percentage >= 0.8) {
+      return Colors.green;
+    } else if (percentage >= 0.6) {
+      return Colors.amber;
+    } else {
+      return Colors.red;
+    }
   }
 
   List<QuestionModel> _createSampleQuestions() {
@@ -585,24 +681,24 @@ class ConnectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double itemHeight = size.height / leftOptions.length;
-    
+
     for (int i = 0; i < leftOptions.length; i++) {
       final leftOption = leftOptions[i];
       if (userPairs.containsKey(leftOption.id)) {
         final rightId = userPairs[leftOption.id]!;
         final rightIndex = rightOptions.indexWhere((option) => option.id == rightId);
-        
+
         if (rightIndex != -1) {
           final startY = i * itemHeight + itemHeight / 2;
           final endY = rightIndex * itemHeight + itemHeight / 2;
-          
+
           final paint = Paint()
             ..color = isAnswerChecked
                 ? (correctPairs[leftOption.id] == rightId ? Colors.green : Colors.red)
                 : Colors.blue
             ..strokeWidth = 2
             ..style = PaintingStyle.stroke;
-          
+
           final path = Path();
           path.moveTo(0, startY);
           path.cubicTo(
@@ -610,7 +706,7 @@ class ConnectionPainter extends CustomPainter {
             size.width * 0.5, endY,
             size.width, endY,
           );
-          
+
           canvas.drawPath(path, paint);
         }
       }

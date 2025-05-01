@@ -298,7 +298,15 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // Navigate to add questions page
+                          // Navigate to question list page
+                          Navigator.of(context).pushNamed(
+                            AppRouter.questionList,
+                            arguments: {
+                              'quizId': quiz.id,
+                              'quizTitle': quiz.title,
+                              'quizType': quiz.type,
+                            },
+                          );
                         },
                         icon: const Icon(Icons.question_answer),
                         label: const Text('Câu hỏi'),

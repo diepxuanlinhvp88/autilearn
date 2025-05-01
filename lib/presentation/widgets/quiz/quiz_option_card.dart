@@ -20,30 +20,42 @@ class QuizOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color borderColor = Colors.grey;
+    Color borderColor = Colors.grey.shade300;
     Color backgroundColor = Colors.white;
+    Color shadowColor = Colors.transparent;
 
     if (isCorrect) {
       borderColor = Colors.green;
       backgroundColor = Colors.green.withOpacity(0.1);
+      shadowColor = Colors.green.withOpacity(0.3);
     } else if (isWrong) {
       borderColor = Colors.red;
       backgroundColor = Colors.red.withOpacity(0.1);
+      shadowColor = Colors.red.withOpacity(0.3);
     } else if (isSelected) {
       borderColor = Colors.blue;
       backgroundColor = Colors.blue.withOpacity(0.1);
+      shadowColor = Colors.blue.withOpacity(0.3);
     }
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: borderColor,
             width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -51,44 +63,78 @@ class QuizOptionCard extends StatelessWidget {
             if (option.imageUrl != null)
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(12.0),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
                       imageUrl: option.imageUrl!,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(),
+                      placeholder: (context, url) => Center(
+                        child: CircularProgressIndicator(
+                          color: isSelected ? Colors.blue : Colors.grey,
+                        ),
                       ),
-                      errorWidget: (context, url, error) => const Icon(
-                        Icons.error,
-                        color: Colors.red,
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 32,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                option.text,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.blue : Colors.black,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+              decoration: BoxDecoration(
+                color: isSelected ? borderColor.withOpacity(0.2) : Colors.grey.shade50,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(14),
+                  bottomRight: Radius.circular(14),
                 ),
-                textAlign: TextAlign.center,
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    option.text,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 16,
+                      color: isSelected ? Colors.blue.shade800 : Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (isCorrect || isWrong)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isCorrect ? Icons.check_circle : Icons.cancel,
+                            color: isCorrect ? Colors.green : Colors.red,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isCorrect ? 'Đúng' : 'Sai',
+                            style: TextStyle(
+                              color: isCorrect ? Colors.green : Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (isCorrect)
-              const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-              )
-            else if (isWrong)
-              const Icon(
-                Icons.cancel,
-                color: Colors.red,
-              ),
           ],
         ),
       ),

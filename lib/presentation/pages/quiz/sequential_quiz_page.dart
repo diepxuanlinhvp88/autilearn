@@ -6,6 +6,8 @@ import '../../../presentation/blocs/quiz/quiz_bloc.dart';
 import '../../../presentation/blocs/quiz/quiz_event.dart';
 import '../../../presentation/blocs/quiz/quiz_state.dart';
 import '../../../presentation/widgets/quiz/sequential_item_card.dart';
+import '../../../core/services/audio_service.dart';
+import '../../../presentation/widgets/common/confetti_animation.dart';
 
 class SequentialQuizPage extends StatefulWidget {
   const SequentialQuizPage({super.key});
@@ -26,6 +28,8 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
   List<String> _userSequence = [];
   List<AnswerOption> _availableOptions = [];
 
+  final AudioService _audioService = getIt<AudioService>();
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<QuizBloc>(
@@ -33,6 +37,21 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học sắp xếp'),
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sắp xếp các hình ảnh theo đúng trình tự'),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: BlocConsumer<QuizBloc, QuizState>(
           listener: (context, state) {
@@ -432,6 +451,9 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                                         _isCorrect = isCorrect;
                                         if (isCorrect) {
                                           _score++;
+                                          _audioService.playCorrectSound();
+                                        } else {
+                                          _audioService.playWrongSound();
                                         }
                                       });
                                     }
@@ -468,6 +490,8 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
   }
 
   void _resetQuestion() {
+    if (_questions.isEmpty) return;
+
     final currentQuestion = _questions[_currentQuestionIndex];
     _userSequence = [];
     _availableOptions = List.from(currentQuestion.options);
@@ -476,36 +500,100 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
   }
 
   void _showCompletionDialog() {
+    // Play success sound
+    _audioService.playSuccessSound();
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Hoàn thành bài học!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.celebration,
-              color: Colors.amber,
-              size: 64,
+      builder: (context) => ConfettiAnimation(
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Hoàn thành bài học!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Điểm của bạn: $_score/$_totalQuestions',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Trophy animation
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: Colors.orange,
+                    size: 64,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tỷ lệ đúng: ${(_score / _totalQuestions * 100).toStringAsFixed(0)}%',
-              style: const TextStyle(
-                fontSize: 16,
+              const SizedBox(height: 24),
+              // Score animation
+              TweenAnimationBuilder<int>(
+                tween: IntTween(begin: 0, end: _score),
+                duration: const Duration(milliseconds: 1500),
+                builder: (context, value, child) {
+                  return Text(
+                    'Điểm của bạn: $value/$_totalQuestions',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 12),
+              // Percentage animation
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: _score / _totalQuestions),
+                duration: const Duration(milliseconds: 1500),
+                builder: (context, value, child) {
+                  return Column(
+                    children: [
+                      Text(
+                        'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(value)),
+                          minHeight: 10,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         actions: [
           TextButton(
             onPressed: () {
@@ -527,7 +615,17 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
           ),
         ],
       ),
-    );
+    ));
+  }
+
+  Color _getScoreColor(double percentage) {
+    if (percentage >= 0.8) {
+      return Colors.green;
+    } else if (percentage >= 0.6) {
+      return Colors.amber;
+    } else {
+      return Colors.red;
+    }
   }
 
   List<QuestionModel> _createSampleQuestions() {

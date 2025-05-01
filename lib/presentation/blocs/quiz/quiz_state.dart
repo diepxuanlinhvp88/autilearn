@@ -46,11 +46,12 @@ class QuestionsLoaded extends QuizState {
 
 class QuizOperationSuccess extends QuizState {
   final String message;
+  final dynamic data;
 
-  const QuizOperationSuccess(this.message);
+  const QuizOperationSuccess(this.message, {this.data});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, data];
 }
 
 class QuizError extends QuizState {

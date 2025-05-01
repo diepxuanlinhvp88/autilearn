@@ -6,6 +6,8 @@ import 'app/app.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/firebase_service.dart';
 import 'core/services/storage_service.dart';
+import 'core/services/audio_service.dart';
+import 'core/services/sample_data_service.dart';
 import 'data/datasources/firebase_datasource.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/quiz_repository.dart';
@@ -13,6 +15,7 @@ import 'data/repositories/user_repository.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/quiz/quiz_bloc.dart';
 import 'presentation/blocs/user/user_progress_bloc.dart';
+import 'presentation/blocs/user/user_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -34,6 +37,8 @@ void setupDependencies() {
   getIt.registerLazySingleton<AuthService>(() => AuthService());
   getIt.registerLazySingleton<FirebaseService>(() => FirebaseService());
   getIt.registerLazySingleton<StorageService>(() => StorageService());
+  getIt.registerLazySingleton<AudioService>(() => AudioService());
+  getIt.registerLazySingleton<SampleDataService>(() => SampleDataService());
 
   // Data sources
   getIt.registerLazySingleton<FirebaseDataSource>(() => FirebaseDataSource());
@@ -62,6 +67,11 @@ void setupDependencies() {
       ));
 
   getIt.registerFactory<UserProgressBloc>(() => UserProgressBloc(
+        quizRepository: getIt<QuizRepository>(),
+      ));
+
+  getIt.registerFactory<UserBloc>(() => UserBloc(
+        userRepository: getIt<UserRepository>(),
         quizRepository: getIt<QuizRepository>(),
       ));
 }
