@@ -14,6 +14,9 @@ class AuthService {
     required String password,
   }) async {
     try {
+      // Set reCAPTCHA verification to false for debug mode
+      await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
+
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -39,16 +42,19 @@ class AuthService {
     required String role, // 'parent', 'teacher', or 'student'
   }) async {
     try {
+      // Set reCAPTCHA verification to false for debug mode
+      await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
+
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       // Update user profile with name
       await userCredential.user!.updateDisplayName(name);
-      
+
       // Add custom claims or user data to Firestore here
-      
+
       return Right(userCredential.user!);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {

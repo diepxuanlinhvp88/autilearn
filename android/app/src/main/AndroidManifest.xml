@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Add Internet permission -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="autilearn"
         android:name="${applicationName}"
@@ -24,12 +26,24 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Add this for Firebase Auth reCAPTCHA verification -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.example.autilearn" android:host="firebase.auth"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Add this for Firebase Auth reCAPTCHA verification -->
+        <meta-data
+            android:name="firebase_auth_recaptcha_enabled"
+            android:value="${is_recaptcha_enabled:true}" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
