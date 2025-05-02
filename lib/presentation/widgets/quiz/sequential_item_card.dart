@@ -136,13 +136,13 @@ class SequentialItemCard extends StatelessWidget {
           if (isDraggable)
             Row(
               children: [
-                if (onRemove != null)
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: onRemove,
-                    color: Colors.grey,
-                    tooltip: 'Xóa khỏi trình tự',
-                  ),
+                // if (onRemove != null)
+                //   IconButton(
+                //     icon: const Icon(Icons.close),
+                //     onPressed: onRemove,
+                //     color: Colors.grey,
+                //     tooltip: 'Xóa khỏi trình tự',
+                //   ),
                 const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Icon(

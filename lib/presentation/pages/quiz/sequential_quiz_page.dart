@@ -35,7 +35,14 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'sequential_quiz', isPublished: true)),
+          create:
+              (context) =>
+                  getIt<QuizBloc>()..add(
+                    const LoadQuizzes(
+                      type: 'sequential_quiz',
+                      isPublished: true,
+                    ),
+                  ),
         ),
       ],
       child: Scaffold(
@@ -61,7 +68,9 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
           listener: (context, state) {
             if (state is QuizzesLoaded && state.quizzes.isNotEmpty) {
               // Load questions for the first quiz of type 'sequential'
-              context.read<QuizBloc>().add(LoadQuestions(state.quizzes.first.id));
+              context.read<QuizBloc>().add(
+                LoadQuestions(state.quizzes.first.id),
+              );
             } else if (state is QuestionsLoaded) {
               setState(() {
                 _questions = state.questions;
@@ -72,14 +81,10 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
           },
           builder: (context, state) {
             if (state is QuizLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             } else if (state is QuestionsLoaded || _questions.isNotEmpty) {
               if (_questions.isEmpty) {
-                return const Center(
-                  child: Text('Không có câu hỏi nào'),
-                );
+                return const Center(child: Text('Không có câu hỏi nào'));
               }
 
               // For demo purposes, create sample questions if none are loaded
@@ -97,7 +102,9 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                   LinearProgressIndicator(
                     value: (_currentQuestionIndex + 1) / _totalQuestions,
                     backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.blue,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -145,7 +152,9 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 image: DecorationImage(
-                                  image: NetworkImage(currentQuestion.imageUrl!),
+                                  image: NetworkImage(
+                                    currentQuestion.imageUrl!,
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -157,7 +166,9 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                             decoration: BoxDecoration(
                               color: Colors.blue.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue.withOpacity(0.5)),
+                              border: Border.all(
+                                color: Colors.blue.withOpacity(0.5),
+                              ),
                             ),
                             child: const Row(
                               children: [
@@ -205,22 +216,12 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                                       ),
                                     ),
                                   )
-                                else
-                                  ReorderableListView.builder(
+                                else if (_isAnswerChecked)
+                                  // Use regular ListView when answer is checked to completely hide drag handles
+                                  ListView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
                                     itemCount: _userSequence.length,
-                                    onReorder: (oldIndex, newIndex) {
-                                      if (!_isAnswerChecked) {
-                                      setState(() {
-                                        if (oldIndex < newIndex) {
-                                          newIndex -= 1;
-                                        }
-                                        final item = _userSequence.removeAt(oldIndex);
-                                        _userSequence.insert(newIndex, item);
-                                      });
-                                      }
-                                    },
                                     itemBuilder: (context, index) {
                                       final optionId = _userSequence[index];
                                       final option = currentQuestion.options
@@ -229,28 +230,81 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                                       bool isCorrectPosition = false;
                                       bool isWrongPosition = false;
 
-                                      if (_isAnswerChecked && currentQuestion.correctSequence != null) {
-                                        isCorrectPosition = currentQuestion.correctSequence![index] == optionId;
+                                      if (currentQuestion.correctSequence != null) {
+                                        isCorrectPosition =
+                                            currentQuestion.correctSequence![index] ==
+                                            optionId;
                                         isWrongPosition = !isCorrectPosition;
                                       }
 
                                       return Padding(
-                                        key: ValueKey(optionId),
-                                        padding: const EdgeInsets.only(bottom: 8.0),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                        ),
                                         child: SequentialItemCard(
                                           option: option,
                                           index: index + 1,
                                           isCorrect: isCorrectPosition,
                                           isWrong: isWrongPosition,
-                                          isDraggable: !_isAnswerChecked,
-                                          onRemove: _isAnswerChecked ? null : () {
+                                          isDraggable: false,
+                                          onRemove: null,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                else
+                                  ReorderableListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: _userSequence.length,
+                                    onReorder: (oldIndex, newIndex) {
+                                      setState(() {
+                                        if (oldIndex < newIndex) {
+                                          newIndex -= 1;
+                                        }
+                                        final item = _userSequence
+                                            .removeAt(oldIndex);
+                                        _userSequence.insert(
+                                          newIndex,
+                                          item,
+                                        );
+                                      });
+                                    },
+                                    itemBuilder: (context, index) {
+                                      final optionId = _userSequence[index];
+                                      final option = currentQuestion.options
+                                          .firstWhere((o) => o.id == optionId);
+
+                                      return Padding(
+                                        key: ValueKey(optionId),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8.0,
+                                        ),
+                                        child: SequentialItemCard(
+                                          option: option,
+                                          index: index + 1,
+                                          isCorrect: false,
+                                          isWrong: false,
+                                          isDraggable: true,
+                                          onRemove: () {
                                             setState(() {
-                                              _userSequence.removeAt(index);
-                                              _availableOptions.add(option);
+                                              _userSequence.removeAt(
+                                                index,
+                                              );
+                                              _availableOptions.add(
+                                                option,
+                                              );
                                               // Sort available options by original order
-                                              _availableOptions.sort((a, b) =>
-                                                currentQuestion.options.indexOf(a) -
-                                                currentQuestion.options.indexOf(b));
+                                              _availableOptions.sort(
+                                                (a, b) =>
+                                                    currentQuestion
+                                                        .options
+                                                        .indexOf(a) -
+                                                    currentQuestion
+                                                        .options
+                                                        .indexOf(b),
+                                              );
                                             });
                                           },
                                         ),
@@ -262,100 +316,106 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                           ),
                           const SizedBox(height: 24),
                           // Available options
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[300]!),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Các mục có sẵn:',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                if (_availableOptions.isEmpty)
-                                  const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(16.0),
-                                      child: Text(
-                                        'Đã sử dụng hết các mục',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                else
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: _availableOptions.map((option) {
-                                      return InkWell(
-                                        onTap: _isAnswerChecked ? null : () {
-                                          setState(() {
-                                            _userSequence.add(option.id);
-                                            _availableOptions.remove(option);
-                                          });
-                                        },
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              if (option.imageUrl != null)
-                                                ClipRRect(
-                                                  borderRadius: BorderRadius.circular(4),
-                                                  child: Image.network(
-                                                    option.imageUrl!,
-                                                    width: 80,
-                                                    height: 80,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                ),
-                                              if (option.imageUrl != null)
-                                                const SizedBox(height: 4),
-                                              Text(
-                                                option.text,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                              ],
-                            ),
-                          ),
+                          // Container(
+                          //   padding: const EdgeInsets.all(16),
+                          //   decoration: BoxDecoration(
+                          //     color: Colors.grey[100],
+                          //     borderRadius: BorderRadius.circular(12),
+                          //     border: Border.all(color: Colors.grey[300]!),
+                          //   ),
+                          // child: Column(
+                          //   crossAxisAlignment: CrossAxisAlignment.start,
+                          //   children: [
+                          //     const Text(
+                          //       'Các mục có sẵn:',
+                          //       style: TextStyle(
+                          //         fontSize: 16,
+                          //         fontWeight: FontWeight.bold,
+                          //       ),
+                          //     ),
+                          //     const SizedBox(height: 12),
+                          //     if (_availableOptions.isEmpty)
+                          //       const Center(
+                          //         child: Padding(
+                          //           padding: EdgeInsets.all(16.0),
+                          //           child: Text(
+                          //             'Đã sử dụng hết các mục',
+                          //             style: TextStyle(
+                          //               color: Colors.grey,
+                          //               fontStyle: FontStyle.italic,
+                          //             ),
+                          //           ),
+                          //         ),
+                          //       )
+                          //     else
+                          //       Wrap(
+                          //         spacing: 8,
+                          //         runSpacing: 8,
+                          //         children: _availableOptions.map((option) {
+                          //           return InkWell(
+                          //             onTap: _isAnswerChecked ? null : () {
+                          //               setState(() {
+                          //                 _userSequence.add(option.id);
+                          //                 _availableOptions.remove(option);
+                          //               });
+                          //             },
+                          //             borderRadius: BorderRadius.circular(8),
+                          //             child: Container(
+                          //               padding: const EdgeInsets.all(8),
+                          //               decoration: BoxDecoration(
+                          //                 color: Colors.white,
+                          //                 borderRadius: BorderRadius.circular(8),
+                          //                 border: Border.all(color: Colors.grey),
+                          //               ),
+                          //               child: Column(
+                          //                 children: [
+                          //                   if (option.imageUrl != null)
+                          //                     ClipRRect(
+                          //                       borderRadius: BorderRadius.circular(4),
+                          //                       child: Image.network(
+                          //                         option.imageUrl!,
+                          //                         width: 80,
+                          //                         height: 80,
+                          //                         fit: BoxFit.cover,
+                          //                       ),
+                          //                     ),
+                          //                   if (option.imageUrl != null)
+                          //                     const SizedBox(height: 4),
+                          //                   Text(
+                          //                     option.text,
+                          //                     style: const TextStyle(
+                          //                       fontSize: 14,
+                          //                     ),
+                          //                   ),
+                          //                 ],
+                          //               ),
+                          //             ),
+                          //           );
+                          //         }).toList(),
+                          //       ),
+                          //   ],
+                          // ),
+                          // ),
                           const SizedBox(height: 24),
                           // Feedback message
                           if (_isAnswerChecked)
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: _isCorrect ? Colors.green[100] : Colors.red[100],
+                                color:
+                                    _isCorrect
+                                        ? Colors.green[100]
+                                        : Colors.red[100],
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
-                                    _isCorrect ? Icons.check_circle : Icons.cancel,
-                                    color: _isCorrect ? Colors.green : Colors.red,
+                                    _isCorrect
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color:
+                                        _isCorrect ? Colors.green : Colors.red,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -364,7 +424,10 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                                           ? 'Chúc mừng! Bạn đã sắp xếp đúng thứ tự.'
                                           : 'Thứ tự chưa đúng. Hãy thử lại nhé!',
                                       style: TextStyle(
-                                        color: _isCorrect ? Colors.green : Colors.red,
+                                        color:
+                                            _isCorrect
+                                                ? Colors.green
+                                                : Colors.red,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -374,7 +437,9 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                             ),
                           const SizedBox(height: 16),
                           // Hint
-                          if (_isAnswerChecked && !_isCorrect && currentQuestion.hint != null)
+                          if (_isAnswerChecked &&
+                              !_isCorrect &&
+                              currentQuestion.hint != null)
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -408,69 +473,83 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        if (!_isAnswerChecked)
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _userSequence.isEmpty ? null : () {
-                                setState(() {
-                                  _resetQuestion();
-                                });
-                              },
-                              child: const Text('Bắt đầu lại'),
-                            ),
-                          ),
-                        if (!_isAnswerChecked)
-                          const SizedBox(width: 16),
+                        // if (!_isAnswerChecked)
+                        //   Expanded(
+                        //     child: OutlinedButton(
+                        //       onPressed: _userSequence.isEmpty ? null : () {
+                        //         setState(() {
+                        //           _resetQuestion();
+                        //         });
+                        //       },
+                        //       child: const Text('Bắt đầu lại'),
+                        //     ),
+                        //   ),
+                        // if (!_isAnswerChecked)
+                        //   const SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _userSequence.length != currentQuestion.options.length
-                                ? null
-                                : () {
-                                    if (_isAnswerChecked) {
-                                      // Move to next question or finish quiz
-                                      if (_currentQuestionIndex < _totalQuestions - 1) {
-                                        setState(() {
-                                          _currentQuestionIndex++;
-                                          _resetQuestion();
-                                        });
+                            onPressed:
+                                _userSequence.length !=
+                                        currentQuestion.options.length
+                                    ? null
+                                    : () {
+                                      if (_isAnswerChecked) {
+                                        // Move to next question or finish quiz
+                                        if (_currentQuestionIndex <
+                                            _totalQuestions - 1) {
+                                          setState(() {
+                                            _currentQuestionIndex++;
+                                            _resetQuestion();
+                                          });
+                                        } else {
+                                          // Show completion dialog
+                                          _showCompletionDialog();
+                                        }
                                       } else {
-                                        // Show completion dialog
-                                        _showCompletionDialog();
-                                      }
-                                    } else {
-                                      // Check answer
-                                      final correctSequence = currentQuestion.correctSequence ?? [];
-                                      bool isCorrect = true;
+                                        // Check answer
+                                        final correctSequence =
+                                            currentQuestion.correctSequence ??
+                                            [];
+                                        bool isCorrect = true;
 
-                                      if (correctSequence.length != _userSequence.length) {
-                                        isCorrect = false;
-                                      } else {
-                                        for (int i = 0; i < correctSequence.length; i++) {
-                                          if (correctSequence[i] != _userSequence[i]) {
-                                            isCorrect = false;
-                                            break;
+                                        if (correctSequence.length !=
+                                            _userSequence.length) {
+                                          isCorrect = false;
+                                        } else {
+                                          for (
+                                            int i = 0;
+                                            i < correctSequence.length;
+                                            i++
+                                          ) {
+                                            if (correctSequence[i] !=
+                                                _userSequence[i]) {
+                                              isCorrect = false;
+                                              break;
+                                            }
                                           }
                                         }
-                                      }
 
-                                      setState(() {
-                                        _isAnswerChecked = true;
-                                        _isCorrect = isCorrect;
-                                        if (isCorrect) {
-                                          _score++;
-                                          _audioService.playCorrectSound();
-                                        } else {
-                                          _audioService.playWrongSound();
-                                        }
-                                      });
-                                    }
-                                  },
+                                        setState(() {
+                                          _isAnswerChecked = true;
+                                          _isCorrect = isCorrect;
+                                          if (isCorrect) {
+                                            _score++;
+                                            _audioService.playCorrectSound();
+                                          } else {
+                                            _audioService.playWrongSound();
+                                          }
+                                        });
+                                      }
+                                    },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isAnswerChecked ? Colors.blue : Colors.green,
+                              backgroundColor:
+                                  _isAnswerChecked ? Colors.blue : Colors.green,
                             ),
                             child: Text(
                               _isAnswerChecked
-                                  ? (_currentQuestionIndex < _totalQuestions - 1 ? 'Câu tiếp theo' : 'Hoàn thành')
+                                  ? (_currentQuestionIndex < _totalQuestions - 1
+                                      ? 'Câu tiếp theo'
+                                      : 'Hoàn thành')
                                   : 'Kiểm tra',
                               style: const TextStyle(color: Colors.white),
                             ),
@@ -482,14 +561,10 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
                 ],
               );
             } else if (state is QuizError) {
-              return Center(
-                child: Text(state.message),
-              );
+              return Center(child: Text(state.message));
             }
 
-            return const Center(
-              child: Text('Không có dữ liệu'),
-            );
+            return const Center(child: Text('Không có dữ liệu'));
           },
         ),
       ),
@@ -500,8 +575,8 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
     if (_questions.isEmpty) return;
 
     final currentQuestion = _questions[_currentQuestionIndex];
-    _userSequence = [];
-    _availableOptions = List.from(currentQuestion.options);
+    _userSequence = currentQuestion.options.map((option) => option.id).toList();
+    _availableOptions = []; // No available options since all are prepopulated
     _isAnswerChecked = false;
     _isCorrect = false;
   }
@@ -513,116 +588,120 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => ConfettiAnimation(
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Hoàn thành bài học!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Trophy animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.emoji_events,
-                    color: Colors.orange,
-                    size: 64,
-                  ),
+      builder:
+          (context) => ConfettiAnimation(
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Hoàn thành bài học!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
                 ),
               ),
-              const SizedBox(height: 24),
-              // Score animation
-              TweenAnimationBuilder<int>(
-                tween: IntTween(begin: 0, end: _score),
-                duration: const Duration(milliseconds: 1500),
-                builder: (context, value, child) {
-                  return Text(
-                    'Điểm của bạn: $value/$_totalQuestions',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Trophy animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(scale: value, child: child);
+                    },
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.emoji_events,
+                        color: Colors.orange,
+                        size: 64,
+                      ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              // Percentage animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0, end: _score / _totalQuestions),
-                duration: const Duration(milliseconds: 1500),
-                builder: (context, value, child) {
-                  return Column(
-                    children: [
-                      Text(
-                        'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
+                  ),
+                  const SizedBox(height: 24),
+                  // Score animation
+                  TweenAnimationBuilder<int>(
+                    tween: IntTween(begin: 0, end: _score),
+                    duration: const Duration(milliseconds: 1500),
+                    builder: (context, value, child) {
+                      return Text(
+                        'Điểm của bạn: $value/$_totalQuestions',
                         style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: value,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(value)),
-                          minHeight: 10,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // Percentage animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: 0,
+                      end: _score / _totalQuestions,
+                    ),
+                    duration: const Duration(milliseconds: 1500),
+                    builder: (context, value, child) {
+                      return Column(
+                        children: [
+                          Text(
+                            'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: value,
+                              backgroundColor: Colors.grey.shade200,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _getScoreColor(value),
+                              ),
+                              minHeight: 10,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Quay lại trang chủ'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _currentQuestionIndex = 0;
+                      _resetQuestion();
+                      _score = 0;
+                    });
+                  },
+                  child: const Text('Làm lại'),
+                ),
+              ],
+            ),
           ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Quay lại trang chủ'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              setState(() {
-                _currentQuestionIndex = 0;
-                _resetQuestion();
-                _score = 0;
-              });
-            },
-            child: const Text('Làm lại'),
-          ),
-        ],
-      ),
-    ));
+    );
   }
 
   Color _getScoreColor(double percentage) {

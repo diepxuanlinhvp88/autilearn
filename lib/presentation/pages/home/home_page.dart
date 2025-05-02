@@ -37,14 +37,15 @@ class _HomePageState extends State<HomePage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
+          create:
+              (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
         ),
         BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
+          create:
+              (context) =>
+                  getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
         ),
-        BlocProvider<UserBloc>(
-          create: (context) => getIt<UserBloc>(),
-        ),
+        BlocProvider<UserBloc>(create: (context) => getIt<UserBloc>()),
       ],
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
@@ -59,39 +60,47 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('AutiLearn'),
                 actions: [
                   // Nút tạo bài học cho giáo viên và phụ huynh
-                  BlocBuilder<UserBloc, UserState>(
-                    builder: (context, userState) {
-                      // Chỉ hiển thị loading nếu UserBloc đang ở trạng thái ban đầu
-                      if (userState is UserInitial) {
-                        return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
-                      }
+                  // BlocBuilder<UserBloc, UserState>(
+                  //   builder: (context, userState) {
+                  //     // Chỉ hiển thị loading nếu UserBloc đang ở trạng thái ban đầu
+                  //     if (userState is UserInitial) {
+                  //       return const SizedBox(
+                  //         width: 24,
+                  //         height: 24,
+                  //         child: CircularProgressIndicator(strokeWidth: 2),
+                  //       );
+                  //     }
 
-                      if (userState is UserError) {
-                        print('Error getting user profile: ${userState.message}');
-                        return const SizedBox.shrink();
-                      }
+                  //     if (userState is UserError) {
+                  //       print(
+                  //         'Error getting user profile: ${userState.message}',
+                  //       );
+                  //       return const SizedBox.shrink();
+                  //     }
 
-                      // Hiển thị nút tạo bài học nếu là giáo viên hoặc phụ huynh
-                      if (userState is UserProfileLoaded &&
-                          (userState.user.role == AppConstants.roleTeacher ||
-                           userState.user.role == AppConstants.roleParent)) {
-                        print('Showing create quiz button for role: ${userState.user.role}');
-                        return IconButton(
-                          icon: const Icon(Icons.add_circle),
-                          tooltip: 'Tạo bài học mới',
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const CreateQuizPage(),
-                              ),
-                            );
-                          },
-                        );
-                      }
+                  //     // Hiển thị nút tạo bài học nếu là giáo viên hoặc phụ huynh
+                  //     if (userState is UserProfileLoaded &&
+                  //         (userState.user.role == AppConstants.roleTeacher ||
+                  //             userState.user.role == AppConstants.roleParent)) {
+                  //       print(
+                  //         'Showing create quiz button for role: ${userState.user.role}',
+                  //       );
+                  //       return IconButton(
+                  //         icon: const Icon(Icons.add_circle),
+                  //         tooltip: 'Tạo bài học mới',
+                  //         onPressed: () {
+                  //           Navigator.of(context).push(
+                  //             MaterialPageRoute(
+                  //               builder: (context) => const CreateQuizPage(),
+                  //             ),
+                  //           );
+                  //         },
+                  //       );
+                  //     }
 
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                  //     return const SizedBox.shrink();
+                  //   },
+                  // ),
                   IconButton(
                     icon: const Icon(Icons.logout),
                     onPressed: () {
@@ -133,9 +142,7 @@ class _HomePageState extends State<HomePage> {
 
           // Show loading indicator while checking auth state
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         },
       ),
@@ -191,7 +198,9 @@ class _HomePageState extends State<HomePage> {
                           builder: (context, userState) {
                             // Trigger loading user profile
                             if (userState is UserInitial) {
-                              context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
+                              context.read<UserBloc>().add(
+                                LoadUserProfile(authState.user.uid),
+                              );
                             }
 
                             String roleName = '';
@@ -253,10 +262,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 20),
                 const Text(
                   'Hãy cùng học hôm nay!',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -270,10 +276,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const Text(
                   'Các loại bài học',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
 
@@ -307,7 +310,9 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.sort,
                       color: Colors.orange,
                       onTap: () {
-                        Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+                        Navigator.of(
+                          context,
+                        ).pushNamed(AppRouter.sequentialQuiz);
                       },
                     ),
                     _buildQuizTypeCardNew(
@@ -333,7 +338,11 @@ class _HomePageState extends State<HomePage> {
                   builder: (context, userState) {
                     // Chỉ hiển thị loading nếu UserBloc đang ở trạng thái ban đầu
                     if (userState is UserInitial) {
-                      return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
+                      return const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
                     }
 
                     if (userState is UserError) {
@@ -344,8 +353,10 @@ class _HomePageState extends State<HomePage> {
                     // Hiển thị công cụ giáo viên nếu là giáo viên hoặc phụ huynh
                     if (userState is UserProfileLoaded &&
                         (userState.user.role == AppConstants.roleTeacher ||
-                         userState.user.role == AppConstants.roleParent)) {
-                      print('Showing teacher tools for role: ${userState.user.role}');
+                            userState.user.role == AppConstants.roleParent)) {
+                      print(
+                        'Showing teacher tools for role: ${userState.user.role}',
+                      );
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -357,6 +368,68 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           const SizedBox(height: 16),
+                          // Card(
+                          //   elevation: 4,
+                          //   shape: RoundedRectangleBorder(
+                          //     borderRadius: BorderRadius.circular(16),
+                          //   ),
+                          //   child: InkWell(
+                          //     onTap: () {
+                          //       Navigator.of(context).push(
+                          //         MaterialPageRoute(
+                          //           builder:
+                          //               (context) => const CreateQuizPage(),
+                          //         ),
+                          //       );
+                          //     },
+                          //     borderRadius: BorderRadius.circular(16),
+                          //     child: Padding(
+                          //       padding: const EdgeInsets.all(16.0),
+                          //       child: Row(
+                          //         children: [
+                          //           Container(
+                          //             padding: const EdgeInsets.all(12),
+                          //             decoration: BoxDecoration(
+                          //               color: Colors.purple.withOpacity(0.1),
+                          //               shape: BoxShape.circle,
+                          //             ),
+                          //             child: const Icon(
+                          //               Icons.create,
+                          //               color: Colors.purple,
+                          //               size: 32,
+                          //             ),
+                          //           ),
+                          //           const SizedBox(width: 16),
+                          //           Expanded(
+                          //             child: Column(
+                          //               crossAxisAlignment:
+                          //                   CrossAxisAlignment.start,
+                          //               children: [
+                          //                 const Text(
+                          //                   'Tạo bài học mới',
+                          //                   style: TextStyle(
+                          //                     fontSize: 18,
+                          //                     fontWeight: FontWeight.bold,
+                          //                   ),
+                          //                 ),
+                          //                 const SizedBox(height: 4),
+                          //                 Text(
+                          //                   'Tạo bài học tùy chỉnh cho trẻ',
+                          //                   style: TextStyle(
+                          //                     fontSize: 14,
+                          //                     color: Colors.grey[600],
+                          //                   ),
+                          //                 ),
+                          //               ],
+                          //             ),
+                          //           ),
+                          //           const Icon(Icons.arrow_forward_ios),
+                          //         ],
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 12),
                           Card(
                             elevation: 4,
                             shape: RoundedRectangleBorder(
@@ -366,67 +439,8 @@ class _HomePageState extends State<HomePage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => const CreateQuizPage(),
-                                  ),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.purple.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.create,
-                                        color: Colors.purple,
-                                        size: 32,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Tạo bài học mới',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Tạo bài học tùy chỉnh cho trẻ',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[600],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(Icons.arrow_forward_ios),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const ManageQuizzesPage(),
+                                    builder:
+                                        (context) => const ManageQuizzesPage(),
                                   ),
                                 );
                               },
@@ -450,7 +464,8 @@ class _HomePageState extends State<HomePage> {
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Quản lý bài học',
@@ -487,10 +502,7 @@ class _HomePageState extends State<HomePage> {
                 // Recent activities section
                 const Text(
                   'Hoạt động gần đây',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
 
@@ -526,9 +538,7 @@ class _HomePageState extends State<HomePage> {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -543,11 +553,7 @@ class _HomePageState extends State<HomePage> {
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 40,
-                ),
+                child: Icon(icon, color: color, size: 40),
               ),
               const SizedBox(height: 12),
               Text(
@@ -567,13 +573,12 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildRecentActivities(String userId) {
     return BlocProvider(
-      create: (context) => getIt<UserProgressBloc>()..add(LoadUserProgress(userId)),
+      create:
+          (context) => getIt<UserProgressBloc>()..add(LoadUserProgress(userId)),
       child: BlocBuilder<UserProgressBloc, UserProgressState>(
         builder: (context, state) {
           if (state is UserProgressLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           } else if (state is UserProgressLoaded) {
             final progressList = state.progressList;
 
@@ -595,67 +600,76 @@ class _HomePageState extends State<HomePage> {
             final recentActivities = progressList.take(5).toList();
 
             return Column(
-              children: recentActivities.map((progress) {
-                // Tìm quiz tương ứng
-                return FutureBuilder<QuizModel?>(
-                  future: _getQuizById(progress.quizId),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const SizedBox.shrink();
-                    }
+              children:
+                  recentActivities.map((progress) {
+                    // Tìm quiz tương ứng
+                    return FutureBuilder<QuizModel?>(
+                      future: _getQuizById(progress.quizId),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const SizedBox.shrink();
+                        }
 
-                    final quiz = snapshot.data!;
-                    IconData icon;
-                    Color color;
+                        final quiz = snapshot.data!;
+                        IconData icon;
+                        Color color;
 
-                    switch (quiz.type) {
-                      case AppConstants.choicesQuiz:
-                        icon = Icons.check_circle;
-                        color = Colors.blue;
-                        break;
-                      case AppConstants.pairingQuiz:
-                        icon = Icons.compare_arrows;
-                        color = Colors.green;
-                        break;
-                      case AppConstants.sequentialQuiz:
-                        icon = Icons.sort;
-                        color = Colors.orange;
-                        break;
-                      default:
-                        icon = Icons.quiz;
-                        color = Colors.purple;
-                    }
+                        switch (quiz.type) {
+                          case AppConstants.choicesQuiz:
+                            icon = Icons.check_circle;
+                            color = Colors.blue;
+                            break;
+                          case AppConstants.pairingQuiz:
+                            icon = Icons.compare_arrows;
+                            color = Colors.green;
+                            break;
+                          case AppConstants.sequentialQuiz:
+                            icon = Icons.sort;
+                            color = Colors.orange;
+                            break;
+                          default:
+                            icon = Icons.quiz;
+                            color = Colors.purple;
+                        }
 
-                    final percentComplete = progress.score / progress.totalQuestions;
-                    final formattedDate = _formatDate(progress.completedAt);
+                        final percentComplete =
+                            progress.score / progress.totalQuestions;
+                        final formattedDate = _formatDate(progress.completedAt);
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: _buildActivityCard(
-                        title: quiz.title,
-                        subtitle: 'Hoàn thành: ${(percentComplete * 100).toInt()}% - $formattedDate',
-                        icon: icon,
-                        color: color,
-                        progress: percentComplete,
-                        onTap: () {
-                          // Mở bài học tương ứng
-                          switch (quiz.type) {
-                            case AppConstants.choicesQuiz:
-                              Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
-                              break;
-                            case AppConstants.pairingQuiz:
-                              Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
-                              break;
-                            case AppConstants.sequentialQuiz:
-                              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
-                              break;
-                          }
-                        },
-                      ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: _buildActivityCard(
+                            title: quiz.title,
+                            subtitle:
+                                'Hoàn thành: ${(percentComplete * 100).toInt()}% - $formattedDate',
+                            icon: icon,
+                            color: color,
+                            progress: percentComplete,
+                            onTap: () {
+                              // Mở bài học tương ứng
+                              switch (quiz.type) {
+                                case AppConstants.choicesQuiz:
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(AppRouter.choicesQuiz);
+                                  break;
+                                case AppConstants.pairingQuiz:
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(AppRouter.pairingQuiz);
+                                  break;
+                                case AppConstants.sequentialQuiz:
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(AppRouter.sequentialQuiz);
+                                  break;
+                              }
+                            },
+                          ),
+                        );
+                      },
                     );
-                  },
-                );
-              }).toList(),
+                  }).toList(),
             );
           } else if (state is UserProgressError) {
             return Card(
@@ -690,10 +704,7 @@ class _HomePageState extends State<HomePage> {
   // Hàm lấy thông tin quiz từ ID
   Future<QuizModel?> _getQuizById(String quizId) async {
     final result = await getIt<QuizRepository>().getQuizById(quizId);
-    return result.fold(
-      (error) => null,
-      (quiz) => quiz,
-    );
+    return result.fold((error) => null, (quiz) => quiz);
   }
 
   // Hàm định dạng ngày tháng
@@ -723,9 +734,7 @@ class _HomePageState extends State<HomePage> {
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -742,10 +751,7 @@ class _HomePageState extends State<HomePage> {
                       color: color.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                    ),
+                    child: Icon(icon, color: color),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -771,7 +777,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   if (onTap != null)
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -798,9 +808,7 @@ class _HomePageState extends State<HomePage> {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -814,11 +822,7 @@ class _HomePageState extends State<HomePage> {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 32,
-                ),
+                child: Icon(icon, color: color, size: 32),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -835,10 +839,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -853,119 +854,118 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildQuizzesTab(Authenticated authState) {
     return BlocProvider(
-      create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
+      create:
+          (context) =>
+              getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
       child: BlocBuilder<QuizBloc, QuizState>(
         builder: (context, state) {
-        if (state is QuizLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (state is QuizzesLoaded) {
-          if (state.quizzes.isEmpty) {
-            return Center(
+          if (state is QuizLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is QuizzesLoaded) {
+            if (state.quizzes.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/empty_lessons.png',
+                      height: 150,
+                      width: 150,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Chưa có bài học nào',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Hãy khám phá các bài học ở trang chủ',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Group quizzes by category
+            final Map<String?, List<QuizModel>> quizzesByCategory = {};
+            for (final quiz in state.quizzes) {
+              if (!quizzesByCategory.containsKey(quiz.category)) {
+                quizzesByCategory[quiz.category] = [];
+              }
+              quizzesByCategory[quiz.category]!.add(quiz);
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.asset(
-                    'assets/images/empty_lessons.png',
-                    height: 150,
-                    width: 150,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Chưa có bài học nào',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // Search bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, color: Colors.grey.shade600),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Tìm kiếm bài học...',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Hãy khám phá các bài học ở trang chủ',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  const SizedBox(height: 24),
+
+                  // Categories
+                  ...quizzesByCategory.entries.map((entry) {
+                    final category = entry.key ?? 'Khác';
+                    final categoryQuizzes = entry.value;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 220,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categoryQuizzes.length,
+                            itemBuilder: (context, index) {
+                              final quiz = categoryQuizzes[index];
+                              return _buildQuizCard(context, quiz);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  }).toList(),
                 ],
               ),
             );
+          } else if (state is QuizError) {
+            return Center(child: Text(state.message));
           }
 
-          // Group quizzes by category
-          final Map<String?, List<QuizModel>> quizzesByCategory = {};
-          for (final quiz in state.quizzes) {
-            if (!quizzesByCategory.containsKey(quiz.category)) {
-              quizzesByCategory[quiz.category] = [];
-            }
-            quizzesByCategory[quiz.category]!.add(quiz);
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search bar
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.search, color: Colors.grey.shade600),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Tìm kiếm bài học...',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Categories
-                ...quizzesByCategory.entries.map((entry) {
-                  final category = entry.key ?? 'Khác';
-                  final categoryQuizzes = entry.value;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 220,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: categoryQuizzes.length,
-                          itemBuilder: (context, index) {
-                            final quiz = categoryQuizzes[index];
-                            return _buildQuizCard(context, quiz);
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  );
-                }).toList(),
-              ],
-            ),
-          );
-        } else if (state is QuizError) {
-          return Center(
-            child: Text(state.message),
-          );
-        }
-
-        return const Center(
-          child: Text('Không có dữ liệu'),
-        );
+          return const Center(child: Text('Không có dữ liệu'));
         },
       ),
     );
@@ -1031,23 +1031,20 @@ class _HomePageState extends State<HomePage> {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              child: quiz.imageUrl != null
-                ? Image.network(
-                    quiz.imageUrl!,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    height: 120,
-                    width: double.infinity,
-                    color: quizColor.withOpacity(0.2),
-                    child: Icon(
-                      quizIcon,
-                      size: 40,
-                      color: quizColor,
-                    ),
-                  ),
+              child:
+                  quiz.imageUrl != null
+                      ? Image.network(
+                        quiz.imageUrl!,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(
+                        height: 120,
+                        width: double.infinity,
+                        color: quizColor.withOpacity(0.2),
+                        child: Icon(quizIcon, size: 40, color: quizColor),
+                      ),
             ),
             // Quiz info
             Padding(
@@ -1078,7 +1075,9 @@ class _HomePageState extends State<HomePage> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: _getDifficultyColor(quiz.difficulty).withOpacity(0.1),
+                          color: _getDifficultyColor(
+                            quiz.difficulty,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -1115,24 +1114,14 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(width: 4),
                       Text(
                         '${quiz.questionCount}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(width: 8),
-                      Icon(
-                        Icons.child_care,
-                        size: 12,
-                        color: Colors.grey[600],
-                      ),
+                      Icon(Icons.child_care, size: 12, color: Colors.grey[600]),
                       const SizedBox(width: 4),
                       Text(
                         '${quiz.ageRangeMin}-${quiz.ageRangeMax}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1150,28 +1139,16 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircleAvatar(
-            radius: 50,
-            child: Icon(
-              Icons.person,
-              size: 50,
-            ),
-          ),
+          const CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
           const SizedBox(height: 16),
           Text(
             authState.user.displayName ?? 'Người dùng',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             authState.user.email ?? '',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
 
@@ -1179,13 +1156,18 @@ class _HomePageState extends State<HomePage> {
           BlocBuilder<UserBloc, UserState>(
             builder: (context, userState) {
               if (userState is UserInitial) {
-                context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
+                context.read<UserBloc>().add(
+                  LoadUserProfile(authState.user.uid),
+                );
                 return const SizedBox.shrink();
               }
 
               if (userState is UserProfileLoaded) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.purple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -1221,7 +1203,10 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               context.read<AuthBloc>().add(const SignOutRequested());
             },
-            child: const Text('Đăng xuất'),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Text('Đăng xuất'),
+            ),
           ),
         ],
       ),

@@ -32,15 +32,27 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'choices_quiz', isPublished: true)),
+          create:
+              (context) =>
+                  getIt<QuizBloc>()..add(
+                    const LoadQuizzes(type: 'choices_quiz', isPublished: true),
+                  ),
         ),
       ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học lựa chọn'),
-          backgroundColor: Colors.blue,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue, Colors.lightBlueAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
           foregroundColor: Colors.white,
-          elevation: 0,
+          elevation: 4,
           actions: [
             IconButton(
               icon: const Icon(Icons.help_outline),
@@ -58,7 +70,9 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
           listener: (context, state) {
             if (state is QuizzesLoaded && state.quizzes.isNotEmpty) {
               // Load questions for the first quiz of type 'choices'
-              context.read<QuizBloc>().add(LoadQuestions(state.quizzes.first.id));
+              context.read<QuizBloc>().add(
+                LoadQuestions(state.quizzes.first.id),
+              );
             } else if (state is QuestionsLoaded) {
               setState(() {
                 _questions = state.questions;
@@ -68,14 +82,10 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
           },
           builder: (context, state) {
             if (state is QuizLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             } else if (state is QuestionsLoaded || _questions.isNotEmpty) {
               if (_questions.isEmpty) {
-                return const Center(
-                  child: Text('Không có câu hỏi nào'),
-                );
+                return const Center(child: Text('Không có câu hỏi nào'));
               }
 
               // For demo purposes, create sample questions if none are loaded
@@ -91,7 +101,9 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                   LinearProgressIndicator(
                     value: (_currentQuestionIndex + 1) / _totalQuestions,
                     backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.blue,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -123,11 +135,19 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Question text
-                          Text(
-                            currentQuestion.text,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                            child: Text(
+                              currentQuestion.text,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -139,7 +159,9 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 image: DecorationImage(
-                                  image: NetworkImage(currentQuestion.imageUrl!),
+                                  image: NetworkImage(
+                                    currentQuestion.imageUrl!,
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -149,31 +171,36 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                           GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 1.0,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 1.0,
+                                  crossAxisSpacing: 20,
+                                  mainAxisSpacing: 20,
+                                ),
                             itemCount: currentQuestion.options.length,
                             itemBuilder: (context, index) {
                               final option = currentQuestion.options[index];
                               bool isSelected = option.id == _selectedOptionId;
-                              bool isCorrect = _isAnswerChecked && option.id == currentQuestion.correctOptionId;
-                              bool isWrong = _isAnswerChecked && isSelected && !isCorrect;
+                              bool isCorrect =
+                                  _isAnswerChecked &&
+                                  option.id == currentQuestion.correctOptionId;
+                              bool isWrong =
+                                  _isAnswerChecked && isSelected && !isCorrect;
 
                               return QuizOptionCard(
                                 option: option,
                                 isSelected: isSelected,
                                 isCorrect: isCorrect,
                                 isWrong: isWrong,
-                                onTap: _isAnswerChecked
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          _selectedOptionId = option.id;
-                                        });
-                                      },
+                                onTap:
+                                    _isAnswerChecked
+                                        ? null
+                                        : () {
+                                          setState(() {
+                                            _selectedOptionId = option.id;
+                                          });
+                                        },
                               );
                             },
                           ),
@@ -183,14 +210,20 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: _isCorrect ? Colors.green[100] : Colors.red[100],
+                                color:
+                                    _isCorrect
+                                        ? Colors.green[100]
+                                        : Colors.red[100],
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
-                                    _isCorrect ? Icons.check_circle : Icons.cancel,
-                                    color: _isCorrect ? Colors.green : Colors.red,
+                                    _isCorrect
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color:
+                                        _isCorrect ? Colors.green : Colors.red,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -199,7 +232,10 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                                           ? 'Chúc mừng! Bạn đã trả lời đúng.'
                                           : 'Sai rồi! Hãy thử lại nhé.',
                                       style: TextStyle(
-                                        color: _isCorrect ? Colors.green : Colors.red,
+                                        color:
+                                            _isCorrect
+                                                ? Colors.green
+                                                : Colors.red,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -209,7 +245,9 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                             ),
                           const SizedBox(height: 16),
                           // Hint
-                          if (_isAnswerChecked && !_isCorrect && currentQuestion.hint != null)
+                          if (_isAnswerChecked &&
+                              !_isCorrect &&
+                              currentQuestion.hint != null)
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -242,6 +280,7 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         if (_currentQuestionIndex > 0 && !_isAnswerChecked)
                           Expanded(
@@ -253,6 +292,9 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                                   _isAnswerChecked = false;
                                 });
                               },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.blue),
+                              ),
                               child: const Text('Quay lại'),
                             ),
                           ),
@@ -260,44 +302,57 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                           const SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _selectedOptionId == null
-                                ? null
-                                : () {
-                                    if (_isAnswerChecked) {
-                                      // Move to next question or finish quiz
-                                      if (_currentQuestionIndex < _totalQuestions - 1) {
-                                        setState(() {
-                                          _currentQuestionIndex++;
-                                          _selectedOptionId = null;
-                                          _isAnswerChecked = false;
-                                        });
-                                      } else {
-                                        // Show completion dialog
-                                        _showCompletionDialog();
-                                      }
-                                    } else {
-                                      // Check answer
-                                      final isCorrect = _selectedOptionId == currentQuestion.correctOptionId;
-                                      setState(() {
-                                        _isAnswerChecked = true;
-                                        _isCorrect = isCorrect;
-                                        if (isCorrect) {
-                                          _score++;
-                                          _audioService.playCorrectSound();
+                            onPressed:
+                                _selectedOptionId == null
+                                    ? null
+                                    : () {
+                                      if (_isAnswerChecked) {
+                                        // Move to next question or finish quiz
+                                        if (_currentQuestionIndex <
+                                            _totalQuestions - 1) {
+                                          setState(() {
+                                            _currentQuestionIndex++;
+                                            _selectedOptionId = null;
+                                            _isAnswerChecked = false;
+                                          });
                                         } else {
-                                          _audioService.playWrongSound();
+                                          // Show completion dialog
+                                          _showCompletionDialog();
                                         }
-                                      });
-                                    }
-                                  },
+                                      } else {
+                                        // Check answer
+                                        final isCorrect =
+                                            _selectedOptionId ==
+                                            currentQuestion.correctOptionId;
+                                        setState(() {
+                                          _isAnswerChecked = true;
+                                          _isCorrect = isCorrect;
+                                          if (isCorrect) {
+                                            _score++;
+                                            _audioService.playCorrectSound();
+                                          } else {
+                                            _audioService.playWrongSound();
+                                          }
+                                        });
+                                      }
+                                    },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isAnswerChecked ? Colors.blue : Colors.green,
+                              backgroundColor:
+                                  _isAnswerChecked ? Colors.blue : Colors.green,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12.0,
+                              ),
                             ),
                             child: Text(
                               _isAnswerChecked
-                                  ? (_currentQuestionIndex < _totalQuestions - 1 ? 'Câu tiếp theo' : 'Hoàn thành')
+                                  ? (_currentQuestionIndex < _totalQuestions - 1
+                                      ? 'Câu tiếp theo'
+                                      : 'Hoàn thành')
                                   : 'Kiểm tra',
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
@@ -307,14 +362,10 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                 ],
               );
             } else if (state is QuizError) {
-              return Center(
-                child: Text(state.message),
-              );
+              return Center(child: Text(state.message));
             }
 
-            return const Center(
-              child: Text('Không có dữ liệu'),
-            );
+            return const Center(child: Text('Không có dữ liệu'));
           },
         ),
       ),
@@ -328,118 +379,122 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => ConfettiAnimation(
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Hoàn thành bài học!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Trophy animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.emoji_events,
-                    color: Colors.amber,
-                    size: 64,
-                  ),
+      builder:
+          (context) => ConfettiAnimation(
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Hoàn thành bài học!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
                 ),
               ),
-              const SizedBox(height: 24),
-              // Score animation
-              TweenAnimationBuilder<int>(
-                tween: IntTween(begin: 0, end: _score),
-                duration: const Duration(milliseconds: 1500),
-                builder: (context, value, child) {
-                  return Text(
-                    'Điểm của bạn: $value/$_totalQuestions',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Trophy animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(scale: value, child: child);
+                    },
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.emoji_events,
+                        color: Colors.amber,
+                        size: 64,
+                      ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              // Percentage animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0, end: _score / _totalQuestions),
-                duration: const Duration(milliseconds: 1500),
-                builder: (context, value, child) {
-                  return Column(
-                    children: [
-                      Text(
-                        'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
+                  ),
+                  const SizedBox(height: 24),
+                  // Score animation
+                  TweenAnimationBuilder<int>(
+                    tween: IntTween(begin: 0, end: _score),
+                    duration: const Duration(milliseconds: 1500),
+                    builder: (context, value, child) {
+                      return Text(
+                        'Điểm của bạn: $value/$_totalQuestions',
                         style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: value,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(value)),
-                          minHeight: 10,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // Percentage animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: 0,
+                      end: _score / _totalQuestions,
+                    ),
+                    duration: const Duration(milliseconds: 1500),
+                    builder: (context, value, child) {
+                      return Column(
+                        children: [
+                          Text(
+                            'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: value,
+                              backgroundColor: Colors.grey.shade200,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _getScoreColor(value),
+                              ),
+                              minHeight: 10,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Quay lại trang chủ'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _currentQuestionIndex = 0;
+                      _selectedOptionId = null;
+                      _isAnswerChecked = false;
+                      _isCorrect = false;
+                      _score = 0;
+                    });
+                  },
+                  child: const Text('Làm lại'),
+                ),
+              ],
+            ),
           ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Quay lại trang chủ'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              setState(() {
-                _currentQuestionIndex = 0;
-                _selectedOptionId = null;
-                _isAnswerChecked = false;
-                _isCorrect = false;
-                _score = 0;
-              });
-            },
-            child: const Text('Làm lại'),
-          ),
-        ],
-      ),
-    ));
+    );
   }
 
   Color _getScoreColor(double percentage) {
@@ -494,22 +549,26 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
           const AnswerOption(
             id: 'A',
             text: 'Xanh',
-            imageUrl: 'https://via.placeholder.com/200x200/0000FF/FFFFFF?text=Blue',
+            imageUrl:
+                'https://via.placeholder.com/200x200/0000FF/FFFFFF?text=Blue',
           ),
           const AnswerOption(
             id: 'B',
             text: 'Đỏ',
-            imageUrl: 'https://via.placeholder.com/200x200/FF0000/FFFFFF?text=Red',
+            imageUrl:
+                'https://via.placeholder.com/200x200/FF0000/FFFFFF?text=Red',
           ),
           const AnswerOption(
             id: 'C',
             text: 'Vàng',
-            imageUrl: 'https://via.placeholder.com/200x200/FFFF00/000000?text=Yellow',
+            imageUrl:
+                'https://via.placeholder.com/200x200/FFFF00/000000?text=Yellow',
           ),
           const AnswerOption(
             id: 'D',
             text: 'Xanh lá',
-            imageUrl: 'https://via.placeholder.com/200x200/00FF00/FFFFFF?text=Green',
+            imageUrl:
+                'https://via.placeholder.com/200x200/00FF00/FFFFFF?text=Green',
           ),
         ],
         correctOptionId: 'B',
