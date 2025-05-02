@@ -46,6 +46,10 @@ class QuizRepository {
     return _firebaseDataSource.getQuestionsByQuizId(quizId);
   }
 
+  Future<Either<String, QuestionModel>> getQuestionById(String questionId) async {
+    return _firebaseDataSource.getQuestionById(questionId);
+  }
+
   Future<Either<String, String>> createQuestion(QuestionModel question) async {
     return _firebaseDataSource.createQuestion(question);
   }

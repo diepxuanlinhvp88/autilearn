@@ -187,8 +187,13 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
 
   void _saveQuestion() {
     if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
       return;
     }
+
+    print('Saving question...');
+    print('Initial question ID: ${widget.initialQuestion?.id}');
+    print('Quiz type: ${widget.quizType}');
 
     QuestionModel question;
 
@@ -205,6 +210,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
+      print('Choices quiz - Options count: ${_options.length}, Correct option ID: $_correctOptionId');
     } else if (widget.quizType == AppConstants.sequentialQuiz) {
       question = QuestionModel(
         id: widget.initialQuestion?.id ?? '',
@@ -218,6 +224,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
+      print('Sequential quiz - Options count: ${_options.length}, Sequence length: ${_correctSequence.length}');
     } else {
       // Combine left and right options for pairing quiz
       final allOptions = [..._leftOptions, ..._rightOptions];
@@ -234,9 +241,15 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
+      print('Pairing quiz - Left options: ${_leftOptions.length}, Right options: ${_rightOptions.length}, Pairs: ${_correctPairs.length}');
     }
 
+    print('Question to save: $question');
+    print('Question ID: ${question.id}');
+    print('Question text: ${question.text}');
+
     widget.onSave(question);
+    print('onSave callback called');
   }
 
   @override

@@ -67,24 +67,32 @@ class _EditQuestionPageState extends State<EditQuestionPage> {
                     quizType: widget.question.type,
                     initialQuestion: widget.question,
                     onSave: (question) {
+                      print('EditQuestionPage: onSave callback received question');
+                      print('EditQuestionPage: Original question ID: ${widget.question.id}');
+                      print('EditQuestionPage: Received question ID: ${question.id}');
+
                       // Preserve ID and order
                       final updatedQuestion = question.copyWith(
                         id: widget.question.id,
                         quizId: widget.question.quizId,
                         order: widget.question.order,
                       );
-                      
+
+                      print('EditQuestionPage: Updated question ID: ${updatedQuestion.id}');
+                      print('EditQuestionPage: Updated question: $updatedQuestion');
+
                       setState(() {
                         _previewQuestion = updatedQuestion;
                       });
-                      
+
                       // Update question
+                      print('EditQuestionPage: Dispatching UpdateQuestion event');
                       context.read<QuizBloc>().add(UpdateQuestion(updatedQuestion));
                     },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Preview
                   if (_previewQuestion != null)
                     QuestionPreviewWidget(question: _previewQuestion!),

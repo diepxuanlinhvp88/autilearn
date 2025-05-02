@@ -291,7 +291,8 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.check_circle,
                       color: Colors.blue,
                       onTap: () {
-                        Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
+                        // Truyền null để hiển thị tất cả bài học loại này
+                        Navigator.of(context).pushNamed(AppRouter.choicesQuiz, arguments: null);
                       },
                     ),
                     _buildQuizTypeCardNew(
@@ -299,7 +300,8 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.compare_arrows,
                       color: Colors.green,
                       onTap: () {
-                        Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
+                        // Truyền null để hiển thị tất cả bài học loại này
+                        Navigator.of(context).pushNamed(AppRouter.pairingQuiz, arguments: null);
                       },
                     ),
                     _buildQuizTypeCardNew(
@@ -307,7 +309,8 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.sort,
                       color: Colors.orange,
                       onTap: () {
-                        Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+                        // Truyền null để hiển thị tất cả bài học loại này
+                        Navigator.of(context).pushNamed(AppRouter.sequentialQuiz, arguments: null);
                       },
                     ),
                     _buildQuizTypeCardNew(
@@ -638,16 +641,16 @@ class _HomePageState extends State<HomePage> {
                         color: color,
                         progress: percentComplete,
                         onTap: () {
-                          // Mở bài học tương ứng
+                          // Mở bài học tương ứng với quiz ID
                           switch (quiz.type) {
                             case AppConstants.choicesQuiz:
-                              Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
+                              Navigator.of(context).pushNamed(AppRouter.choicesQuiz, arguments: quiz.id);
                               break;
                             case AppConstants.pairingQuiz:
-                              Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
+                              Navigator.of(context).pushNamed(AppRouter.pairingQuiz, arguments: quiz.id);
                               break;
                             case AppConstants.sequentialQuiz:
-                              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+                              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz, arguments: quiz.id);
                               break;
                           }
                         },
@@ -1009,16 +1012,16 @@ class _HomePageState extends State<HomePage> {
       ),
       child: InkWell(
         onTap: () {
-          // Navigate to the appropriate quiz page
+          // Navigate to the appropriate quiz page with quiz ID
           switch (quiz.type) {
             case AppConstants.choicesQuiz:
-              Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
+              Navigator.of(context).pushNamed(AppRouter.choicesQuiz, arguments: quiz.id);
               break;
             case AppConstants.pairingQuiz:
-              Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
+              Navigator.of(context).pushNamed(AppRouter.pairingQuiz, arguments: quiz.id);
               break;
             case AppConstants.sequentialQuiz:
-              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz, arguments: quiz.id);
               break;
           }
         },

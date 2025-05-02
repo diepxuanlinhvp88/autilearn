@@ -10,7 +10,9 @@ import '../../../core/services/audio_service.dart';
 import '../../../presentation/widgets/common/confetti_animation.dart';
 
 class SequentialQuizPage extends StatefulWidget {
-  const SequentialQuizPage({super.key});
+  final String? quizId;
+
+  const SequentialQuizPage({super.key, this.quizId});
 
   @override
   State<SequentialQuizPage> createState() => _SequentialQuizPageState();
@@ -35,7 +37,17 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'sequential_quiz', isPublished: true)),
+          create: (context) {
+            final bloc = getIt<QuizBloc>();
+            if (widget.quizId != null) {
+              // Load questions for the specific quiz
+              bloc.add(LoadQuestions(widget.quizId!));
+            } else {
+              // Load all published quizzes of type 'sequential_quiz'
+              bloc.add(const LoadQuizzes(type: 'sequential_quiz', isPublished: true));
+            }
+            return bloc;
+          },
         ),
       ],
       child: Scaffold(
@@ -83,7 +95,8 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
               }
 
               // For demo purposes, create sample questions if none are loaded
-              if (_questions.isEmpty) {
+              // and no specific quiz ID was provided
+              if (_questions.isEmpty && widget.quizId == null) {
                 _questions = _createSampleQuestions();
                 _totalQuestions = _questions.length;
                 _resetQuestion();

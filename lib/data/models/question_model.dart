@@ -33,7 +33,7 @@ class QuestionModel extends Equatable {
 
   factory QuestionModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     List<AnswerOption> options = [];
     if (data['options'] != null) {
       options = List<AnswerOption>.from(
@@ -79,6 +79,8 @@ class QuestionModel extends Equatable {
       'imageUrl': imageUrl,
       'order': order,
       'hint': hint,
+      // Không bao gồm ID vì ID là document ID trong Firestore
+      // 'id': id,
     };
 
     if (type == AppConstants.choicesQuiz) {

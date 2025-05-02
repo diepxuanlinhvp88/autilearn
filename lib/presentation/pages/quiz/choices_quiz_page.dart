@@ -10,7 +10,9 @@ import '../../../core/services/audio_service.dart';
 import '../../../presentation/widgets/common/confetti_animation.dart';
 
 class ChoicesQuizPage extends StatefulWidget {
-  const ChoicesQuizPage({super.key});
+  final String? quizId;
+
+  const ChoicesQuizPage({super.key, this.quizId});
 
   @override
   State<ChoicesQuizPage> createState() => _ChoicesQuizPageState();
@@ -32,7 +34,17 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'choices_quiz', isPublished: true)),
+          create: (context) {
+            final bloc = getIt<QuizBloc>();
+            if (widget.quizId != null) {
+              // Load questions for the specific quiz
+              bloc.add(LoadQuestions(widget.quizId!));
+            } else {
+              // Load all published quizzes of type 'choices_quiz'
+              bloc.add(const LoadQuizzes(type: 'choices_quiz', isPublished: true));
+            }
+            return bloc;
+          },
         ),
       ],
       child: Scaffold(
@@ -79,7 +91,8 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
               }
 
               // For demo purposes, create sample questions if none are loaded
-              if (_questions.isEmpty) {
+              // and no specific quiz ID was provided
+              if (_questions.isEmpty && widget.quizId == null) {
                 _questions = _createSampleQuestions();
                 _totalQuestions = _questions.length;
               }

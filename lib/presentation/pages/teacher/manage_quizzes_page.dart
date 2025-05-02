@@ -278,13 +278,61 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
+                          // Navigate to play quiz
+                          String routeName;
+                          switch (quiz.type) {
+                            case 'choices_quiz':
+                              routeName = AppRouter.choicesQuiz;
+                              break;
+                            case 'pairing_quiz':
+                              routeName = AppRouter.pairingQuiz;
+                              break;
+                            case 'sequential_quiz':
+                              routeName = AppRouter.sequentialQuiz;
+                              break;
+                            default:
+                              routeName = AppRouter.choicesQuiz;
+                          }
+
+                          Navigator.of(context).pushNamed(
+                            routeName,
+                            arguments: quiz.id,
+                          );
+                        },
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Chơi'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
                           // Navigate to edit quiz page
+                          Navigator.of(context).pushNamed(
+                            AppRouter.editQuiz,
+                            arguments: quiz,
+                          ).then((result) {
+                            // Reload quizzes if quiz was updated
+                            if (result == true) {
+                              final authState = context.read<AuthBloc>().state;
+                              if (authState is Authenticated) {
+                                context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
+                              }
+                            }
+                          });
                         },
                         icon: const Icon(Icons.edit),
                         label: const Text('Chỉnh sửa'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {

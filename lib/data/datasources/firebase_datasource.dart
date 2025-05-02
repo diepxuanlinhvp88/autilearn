@@ -168,6 +168,26 @@ class FirebaseDataSource {
     }
   }
 
+  Future<Either<String, QuestionModel>> getQuestionById(String questionId) async {
+    try {
+      print('Fetching question with ID: $questionId');
+      final doc = await _firestore.collection('questions').doc(questionId).get();
+
+      if (!doc.exists) {
+        print('Question document does not exist in Firestore');
+        return Left('Question not found');
+      }
+
+      final question = QuestionModel.fromFirestore(doc);
+      print('Found question: id=${question.id}, text=${question.text}');
+
+      return Right(question);
+    } catch (e) {
+      print('Error fetching question from Firestore: $e');
+      return Left(e.toString());
+    }
+  }
+
   Future<Either<String, String>> createQuestion(QuestionModel question) async {
     try {
       final docRef = await _firestore.collection('questions').add(question.toMap());
@@ -179,9 +199,16 @@ class FirebaseDataSource {
 
   Future<Either<String, bool>> updateQuestion(QuestionModel question) async {
     try {
-      await _firestore.collection('questions').doc(question.id).update(question.toMap());
+      print('Updating question with ID: ${question.id}');
+      final questionData = question.toMap();
+      print('Question data to update: $questionData');
+
+      await _firestore.collection('questions').doc(question.id).update(questionData);
+      print('Question updated successfully');
+
       return const Right(true);
     } catch (e) {
+      print('Error updating question: $e');
       return Left(e.toString());
     }
   }

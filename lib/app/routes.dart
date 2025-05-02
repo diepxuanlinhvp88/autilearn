@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/models/quiz_model.dart';
 import '../presentation/pages/auth/login_page.dart';
 import '../presentation/pages/auth/register_page.dart';
 import '../presentation/pages/home/home_page.dart';
@@ -6,6 +7,7 @@ import '../presentation/pages/quiz/choices_quiz_page.dart';
 import '../presentation/pages/quiz/pairing_quiz_page.dart';
 import '../presentation/pages/quiz/sequential_quiz_page.dart';
 import '../presentation/pages/teacher/create_quiz_page.dart';
+import '../presentation/pages/teacher/edit_quiz_page.dart';
 import '../presentation/pages/teacher/manage_quizzes_page.dart';
 import '../presentation/pages/teacher/question_list_page.dart';
 import '../presentation/pages/teacher/create_question_page.dart';
@@ -24,6 +26,7 @@ class AppRouter {
   static const String pairingQuiz = '/quiz/pairing';
   static const String sequentialQuiz = '/quiz/sequential';
   static const String createQuiz = '/teacher/create-quiz';
+  static const String editQuiz = '/teacher/edit-quiz';
   static const String manageQuizzes = '/teacher/manage-quizzes';
   static const String questionList = '/teacher/question-list';
   static const String createQuestion = '/teacher/create-question';
@@ -43,13 +46,19 @@ class AppRouter {
       case home:
         return MaterialPageRoute(builder: (_) => const HomePage());
       case choicesQuiz:
-        return MaterialPageRoute(builder: (_) => const ChoicesQuizPage());
+        final quizId = settings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => ChoicesQuizPage(quizId: quizId));
       case pairingQuiz:
-        return MaterialPageRoute(builder: (_) => const PairingQuizPage());
+        final quizId = settings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => PairingQuizPage(quizId: quizId));
       case sequentialQuiz:
-        return MaterialPageRoute(builder: (_) => const SequentialQuizPage());
+        final quizId = settings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => SequentialQuizPage(quizId: quizId));
       case createQuiz:
         return MaterialPageRoute(builder: (_) => const CreateQuizPage());
+      case editQuiz:
+        final quiz = settings.arguments as QuizModel;
+        return MaterialPageRoute(builder: (_) => EditQuizPage(quiz: quiz));
       case manageQuizzes:
         return MaterialPageRoute(builder: (_) => const ManageQuizzesPage());
       case questionList:
