@@ -33,8 +33,12 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<QuizBloc>(
-      create: (context) => getIt<QuizBloc>()..add(const LoadQuestions('sample_pairing_quiz_id')),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<QuizBloc>(
+          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'pairing_quiz', isPublished: true)),
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học ghép đôi'),
@@ -56,7 +60,10 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
         ),
         body: BlocConsumer<QuizBloc, QuizState>(
           listener: (context, state) {
-            if (state is QuestionsLoaded) {
+            if (state is QuizzesLoaded && state.quizzes.isNotEmpty) {
+              // Load questions for the first quiz of type 'pairing'
+              context.read<QuizBloc>().add(LoadQuestions(state.quizzes.first.id));
+            } else if (state is QuestionsLoaded) {
               setState(() {
                 _questions = state.questions;
                 _totalQuestions = state.questions.length;

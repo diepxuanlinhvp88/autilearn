@@ -42,6 +42,7 @@ class AuthService {
     required String role, // 'parent', 'teacher', or 'student'
   }) async {
     try {
+      print('AuthService: Registering user with email: $email, role: $role');
       // Set reCAPTCHA verification to false for debug mode
       await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
 
@@ -50,13 +51,16 @@ class AuthService {
         password: password,
       );
 
+      print('AuthService: User created in Firebase Auth, updating display name');
       // Update user profile with name
       await userCredential.user!.updateDisplayName(name);
 
       // Add custom claims or user data to Firestore here
+      print('AuthService: Registration successful, user: ${userCredential.user!.uid}, role: $role');
 
       return Right(userCredential.user!);
     } on FirebaseAuthException catch (e) {
+      print('AuthService: FirebaseAuthException during registration: ${e.code}');
       if (e.code == 'email-already-in-use') {
         return Left(AuthFailure.emailAlreadyInUse());
       } else if (e.code == 'weak-password') {
@@ -65,6 +69,7 @@ class AuthService {
         return Left(AuthFailure.serverError());
       }
     } catch (e) {
+      print('AuthService: Error during registration: $e');
       return Left(AuthFailure.serverError());
     }
   }

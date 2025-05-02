@@ -5,6 +5,7 @@ import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../app/routes.dart';
+import '../../../core/constants/app_constants.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -51,6 +52,14 @@ class _LoginPageState extends State<LoginPage> {
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is Authenticated) {
+              // Đảm bảo người dùng có trong Firestore
+              context.read<AuthBloc>().add(EnsureUserInFirestore(
+                    userId: state.user.uid,
+                    name: state.user.displayName,
+                    email: state.user.email,
+                    role: AppConstants.roleTeacher, // Mặc định là giáo viên
+                  ));
+
               Navigator.of(context).pushReplacementNamed(AppRouter.home);
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(

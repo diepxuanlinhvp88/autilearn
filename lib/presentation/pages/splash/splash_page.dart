@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../app/routes.dart';
+import '../../../core/services/user_role_service.dart';
+import '../../../core/constants/app_constants.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -17,6 +20,9 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+
+  final UserRoleService _userRoleService = UserRoleService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -43,8 +49,21 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     _controller.forward();
 
     // Navigate to the appropriate screen after animation
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
+        // Kiểm tra người dùng hiện tại
+        final user = _auth.currentUser;
+        if (user != null) {
+          // Đảm bảo người dùng có trong Firestore
+          context.read<AuthBloc>().add(EnsureUserInFirestore(
+                userId: user.uid,
+                name: user.displayName,
+                email: user.email,
+                role: AppConstants.roleTeacher, // Mặc định là giáo viên
+              ));
+        }
+
+        // Kiểm tra trạng thái đăng nhập
         context.read<AuthBloc>().add(const AuthCheckRequested());
       }
     });

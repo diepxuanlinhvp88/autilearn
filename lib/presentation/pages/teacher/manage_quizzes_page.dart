@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../widgets/common/bloc_wrapper.dart';
+import '../teacher/create_quiz_page.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/quiz_model.dart';
 import '../../../main.dart';
@@ -20,53 +22,50 @@ class ManageQuizzesPage extends StatefulWidget {
 class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>(),
-        ),
-        BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>(),
-        ),
-      ],
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
-          if (authState is Authenticated) {
-            // Load quizzes created by this user
-            context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        if (authState is Authenticated) {
+          // Load quizzes created by this user
+          context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
 
-            return Scaffold(
-              appBar: AppBar(
-                title: const Text('Quản lý bài học'),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      Navigator.of(context).pushNamed(AppRouter.createQuiz);
-                    },
-                    tooltip: 'Tạo bài học mới',
-                  ),
-                ],
-              ),
-              body: BlocConsumer<QuizBloc, QuizState>(
-                listener: (context, state) {
-                  if (state is QuizOperationSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.green,
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Quản lý bài học'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => BlocWrapper(
+                          child: const CreateQuizPage(),
+                        ),
                       ),
                     );
-                    // Reload quizzes after operation
-                    context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
-                  } else if (state is QuizError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                  },
+                  tooltip: 'Tạo bài học mới',
+                ),
+              ],
+            ),
+            body: BlocConsumer<QuizBloc, QuizState>(
+              listener: (context, state) {
+                if (state is QuizOperationSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  // Reload quizzes after operation
+                  context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
+                } else if (state is QuizError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
                 },
                 builder: (context, state) {
                   if (state is QuizLoading) {
@@ -137,7 +136,13 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
               ),
               floatingActionButton: FloatingActionButton(
                 onPressed: () {
-                  Navigator.of(context).pushNamed(AppRouter.createQuiz);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocWrapper(
+                        child: const CreateQuizPage(),
+                      ),
+                    ),
+                  );
                 },
                 child: const Icon(Icons.add),
               ),
@@ -154,8 +159,7 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
             );
           }
         },
-      ),
-    );
+      );
   }
 
   Widget _buildQuizCard(BuildContext context, QuizModel quiz) {

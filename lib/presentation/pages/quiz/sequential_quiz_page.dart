@@ -32,8 +32,12 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<QuizBloc>(
-      create: (context) => getIt<QuizBloc>()..add(const LoadQuestions('sample_sequential_quiz_id')),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<QuizBloc>(
+          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'sequential_quiz', isPublished: true)),
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học sắp xếp'),
@@ -55,7 +59,10 @@ class _SequentialQuizPageState extends State<SequentialQuizPage> {
         ),
         body: BlocConsumer<QuizBloc, QuizState>(
           listener: (context, state) {
-            if (state is QuestionsLoaded) {
+            if (state is QuizzesLoaded && state.quizzes.isNotEmpty) {
+              // Load questions for the first quiz of type 'sequential'
+              context.read<QuizBloc>().add(LoadQuestions(state.quizzes.first.id));
+            } else if (state is QuestionsLoaded) {
               setState(() {
                 _questions = state.questions;
                 _totalQuestions = state.questions.length;

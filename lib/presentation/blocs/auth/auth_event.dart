@@ -44,3 +44,20 @@ class RegisterRequested extends AuthEvent {
 class SignOutRequested extends AuthEvent {
   const SignOutRequested();
 }
+
+class EnsureUserInFirestore extends AuthEvent {
+  final String userId;
+  final String? name;
+  final String? email;
+  final String role;
+
+  const EnsureUserInFirestore({
+    required this.userId,
+    this.name,
+    this.email,
+    required this.role,
+  });
+
+  @override
+  List<Object?> get props => [userId, name, email, role];
+}

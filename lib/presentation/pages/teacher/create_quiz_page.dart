@@ -47,59 +47,50 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>(),
-        ),
-        BlocProvider<QuizBloc>(
-          create: (context) => getIt<QuizBloc>(),
-        ),
-      ],
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
-          if (authState is Authenticated) {
-            return Scaffold(
-              appBar: AppBar(
-                title: const Text('Tạo bài học mới'),
-              ),
-              body: BlocConsumer<QuizBloc, QuizState>(
-                listener: (context, state) {
-                  if (state is QuizOperationSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        if (authState is Authenticated) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Tạo bài học mới'),
+            ),
+            body: BlocConsumer<QuizBloc, QuizState>(
+              listener: (context, state) {
+                if (state is QuizOperationSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
 
-                    // Navigate to question list page for the new quiz
-                    if (state.message.contains('created successfully')) {
-                      // Extract quiz ID from the state
-                      final quizId = state.data as String?;
-                      if (quizId != null) {
-                        Navigator.of(context).pushReplacementNamed(
-                          AppRouter.questionList,
-                          arguments: {
-                            'quizId': quizId,
-                            'quizTitle': _titleController.text.trim(),
-                            'quizType': _selectedType,
-                          },
-                        );
-                      } else {
-                        Navigator.of(context).pushReplacementNamed(AppRouter.manageQuizzes);
-                      }
+                  // Navigate to question list page for the new quiz
+                  if (state.message.contains('created successfully')) {
+                    // Extract quiz ID from the state
+                    final quizId = state.data as String?;
+                    if (quizId != null) {
+                      Navigator.of(context).pushReplacementNamed(
+                        AppRouter.questionList,
+                        arguments: {
+                          'quizId': quizId,
+                          'quizTitle': _titleController.text.trim(),
+                          'quizType': _selectedType,
+                        },
+                      );
                     } else {
                       Navigator.of(context).pushReplacementNamed(AppRouter.manageQuizzes);
                     }
-                  } else if (state is QuizError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                  } else {
+                    Navigator.of(context).pushReplacementNamed(AppRouter.manageQuizzes);
                   }
+                } else if (state is QuizError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
                 },
                 builder: (context, state) {
                   return SingleChildScrollView(
@@ -366,7 +357,6 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
             );
           }
         },
-      ),
-    );
+      );
   }
 }

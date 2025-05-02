@@ -29,8 +29,12 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<QuizBloc>(
-      create: (context) => getIt<QuizBloc>()..add(const LoadQuestions('sample_quiz_id')),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<QuizBloc>(
+          create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(type: 'choices_quiz', isPublished: true)),
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học lựa chọn'),
@@ -52,7 +56,10 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
         ),
         body: BlocConsumer<QuizBloc, QuizState>(
           listener: (context, state) {
-            if (state is QuestionsLoaded) {
+            if (state is QuizzesLoaded && state.quizzes.isNotEmpty) {
+              // Load questions for the first quiz of type 'choices'
+              context.read<QuizBloc>().add(LoadQuestions(state.quizzes.first.id));
+            } else if (state is QuestionsLoaded) {
               setState(() {
                 _questions = state.questions;
                 _totalQuestions = state.questions.length;

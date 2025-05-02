@@ -48,12 +48,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      final name = _nameController.text.trim();
+      final role = _selectedRole;
+
+      print('Submitting registration form with role: $role');
+
       context.read<AuthBloc>().add(
             RegisterRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-              name: _nameController.text.trim(),
-              role: _selectedRole,
+              email: email,
+              password: password,
+              name: name,
+              role: role,
             ),
           );
     }

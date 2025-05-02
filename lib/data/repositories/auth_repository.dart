@@ -35,6 +35,7 @@ class AuthRepository {
     required String name,
     required String role,
   }) async {
+    print('Registering user with email: $email, name: $name, role: $role');
     final result = await _authService.registerWithEmailAndPassword(
       email: email,
       password: password,
@@ -43,8 +44,12 @@ class AuthRepository {
     );
 
     return result.fold(
-      (failure) => Left(failure),
+      (failure) {
+        print('Registration failed: ${failure.message}');
+        return Left(failure);
+      },
       (user) async {
+        print('User registered successfully with UID: ${user.uid}');
         // Create user document in Firestore
         final userModel = UserModel(
           id: user.uid,
@@ -55,7 +60,12 @@ class AuthRepository {
           updatedAt: DateTime.now(),
         );
 
-        await _firebaseDataSource.createUser(userModel);
+        print('Creating user document in Firestore with role: $role');
+        final result = await _firebaseDataSource.createUser(userModel);
+        result.fold(
+          (error) => print('Error creating user document: $error'),
+          (_) => print('User document created successfully'),
+        );
         return Right(user);
       },
     );

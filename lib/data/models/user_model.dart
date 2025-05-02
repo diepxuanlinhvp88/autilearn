@@ -22,11 +22,17 @@ class UserModel extends Equatable {
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    print('Creating UserModel from Firestore data: $data');
+
+    // Ensure role is not null or empty
+    final role = data['role'] ?? '';
+    print('User role from Firestore: $role');
+
     return UserModel(
       id: doc.id,
       name: data['name'] ?? '',
       email: data['email'] ?? '',
-      role: data['role'] ?? '',
+      role: role,
       avatarUrl: data['avatarUrl'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -34,7 +40,7 @@ class UserModel extends Equatable {
   }
 
   Map<String, dynamic> toMap() {
-    return {
+    final map = {
       'name': name,
       'email': email,
       'role': role,
@@ -42,6 +48,8 @@ class UserModel extends Equatable {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
+    print('UserModel.toMap(): $map');
+    return map;
   }
 
   UserModel copyWith({

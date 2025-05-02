@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../main.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
@@ -98,18 +99,62 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: Colors.white70,
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          // User role badge
+                          const SizedBox(height: 8),
+
+                          // User role text
                           BlocBuilder<UserBloc, UserState>(
                             builder: (context, userState) {
-                              // Trigger loading user profile
                               if (userState is UserInitial) {
                                 context.read<UserBloc>().add(LoadUserProfile(state.user.uid));
+                                return const SizedBox.shrink();
+                              }
+
+                              if (userState is UserProfileLoaded) {
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _getRoleIcon(userState.user.role),
+                                      color: Colors.white70,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Vai trò: ${_getRoleName(userState.user.role)}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              return const SizedBox.shrink();
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+                          // User role badge
+                          // Hiển thị vai trò người dùng từ UserBloc
+                          BlocBuilder<UserBloc, UserState>(
+                            builder: (context, userState) {
+                              // Kích hoạt LoadUserProfile để cập nhật UserBloc
+                              if (userState is UserInitial) {
+                                context.read<UserBloc>().add(LoadUserProfile(state.user.uid));
+                                return const CircularProgressIndicator(color: Colors.white);
+                              }
+
+                              if (userState is UserError) {
+                                print('Error getting user profile: ${userState.message}');
+                                return Text('Error: ${userState.message}', style: const TextStyle(color: Colors.white));
                               }
 
                               String role = AppConstants.roleStudent;
                               if (userState is UserProfileLoaded) {
                                 role = userState.user.role;
+                                print('User role from UserBloc: $role');
                               }
 
                               return Container(
@@ -121,12 +166,23 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: Colors.white.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Text(
-                                  _getRoleName(role),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _getRoleIcon(role),
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _getRoleName(role),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               );
                             },
@@ -462,6 +518,41 @@ class _ProfilePageState extends State<ProfilePage> {
         return 'Học sinh';
       default:
         return 'Người dùng';
+    }
+  }
+
+  IconData _getRoleIcon(String roleKey) {
+    switch (roleKey) {
+      case AppConstants.roleParent:
+        return Icons.family_restroom;
+      case AppConstants.roleTeacher:
+        return Icons.school;
+      case AppConstants.roleStudent:
+        return Icons.face;
+      default:
+        return Icons.person;
+    }
+  }
+
+  // Phương thức lấy vai trò người dùng trực tiếp từ Firestore
+  Future<String> _getUserRole(String userId) async {
+    try {
+      print('Getting user role for userId: $userId');
+      final firestore = FirebaseFirestore.instance;
+      final doc = await firestore.collection('users').doc(userId).get();
+
+      if (!doc.exists) {
+        print('User document does not exist');
+        return AppConstants.roleStudent;
+      }
+
+      final data = doc.data() as Map<String, dynamic>?;
+      final role = data?['role'] as String? ?? AppConstants.roleStudent;
+      print('User role from Firestore: $role');
+      return role;
+    } catch (e) {
+      print('Error getting user role: $e');
+      return AppConstants.roleStudent;
     }
   }
 

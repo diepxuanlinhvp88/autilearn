@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../teacher/create_quiz_page.dart';
+import '../teacher/manage_quizzes_page.dart';
+import '../../widgets/common/bloc_wrapper.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/quiz_model.dart';
 import '../../../main.dart';
@@ -9,6 +12,10 @@ import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../presentation/blocs/quiz/quiz_bloc.dart';
 import '../../../presentation/blocs/quiz/quiz_event.dart';
 import '../../../presentation/blocs/quiz/quiz_state.dart';
+import '../../../presentation/blocs/user/user_bloc.dart';
+import '../../../presentation/blocs/user/user_event.dart';
+import '../../../presentation/blocs/user/user_state.dart';
+import '../../../data/models/user_model.dart';
 import '../../../app/routes.dart';
 
 class HomePage extends StatefulWidget {
@@ -31,14 +38,58 @@ class _HomePageState extends State<HomePage> {
         BlocProvider<QuizBloc>(
           create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
         ),
+        BlocProvider<UserBloc>(
+          create: (context) => getIt<UserBloc>(),
+        ),
       ],
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
           if (authState is Authenticated) {
+            // Tự động tải thông tin người dùng (chỉ gọi một lần khi UserBloc đang ở trạng thái ban đầu)
+            if (context.read<UserBloc>().state is UserInitial) {
+              print('HomePage: Loading user profile once');
+              context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
+            }
             return Scaffold(
               appBar: AppBar(
                 title: const Text('AutiLearn'),
                 actions: [
+                  // Nút tạo bài học cho giáo viên và phụ huynh
+                  BlocBuilder<UserBloc, UserState>(
+                    builder: (context, userState) {
+                      // Chỉ hiển thị loading nếu UserBloc đang ở trạng thái ban đầu
+                      if (userState is UserInitial) {
+                        return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
+                      }
+
+                      if (userState is UserError) {
+                        print('Error getting user profile: ${userState.message}');
+                        return const SizedBox.shrink();
+                      }
+
+                      // Hiển thị nút tạo bài học nếu là giáo viên hoặc phụ huynh
+                      if (userState is UserProfileLoaded &&
+                          (userState.user.role == AppConstants.roleTeacher ||
+                           userState.user.role == AppConstants.roleParent)) {
+                        print('Showing create quiz button for role: ${userState.user.role}');
+                        return IconButton(
+                          icon: const Icon(Icons.add_circle),
+                          tooltip: 'Tạo bài học mới',
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => BlocWrapper(
+                                  child: const CreateQuizPage(),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
+
+                      return const SizedBox.shrink();
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.logout),
                     onPressed: () {
@@ -134,12 +185,50 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          authState.user.displayName ?? 'Người dùng',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        BlocBuilder<UserBloc, UserState>(
+                          builder: (context, userState) {
+                            // Trigger loading user profile
+                            if (userState is UserInitial) {
+                              context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
+                            }
+
+                            String roleName = '';
+                            if (userState is UserProfileLoaded) {
+                              switch (userState.user.role) {
+                                case AppConstants.roleTeacher:
+                                  roleName = ' (Giáo viên)';
+                                  break;
+                                case AppConstants.roleParent:
+                                  roleName = ' (Phụ huynh)';
+                                  break;
+                                case AppConstants.roleStudent:
+                                  roleName = ' (Học sinh)';
+                                  break;
+                              }
+                            }
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  authState.user.displayName ?? 'Người dùng',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (roleName.isNotEmpty)
+                                  Text(
+                                    roleName,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -235,6 +324,167 @@ class _HomePageState extends State<HomePage> {
                 ),
 
                 const SizedBox(height: 24),
+
+                // Nút tạo bài học cho giáo viên và phụ huynh
+                // Hiển thị công cụ giáo viên từ UserBloc
+                BlocBuilder<UserBloc, UserState>(
+                  builder: (context, userState) {
+                    // Chỉ hiển thị loading nếu UserBloc đang ở trạng thái ban đầu
+                    if (userState is UserInitial) {
+                      return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
+                    }
+
+                    if (userState is UserError) {
+                      print('Error getting user profile: ${userState.message}');
+                      return const SizedBox.shrink();
+                    }
+
+                    // Hiển thị công cụ giáo viên nếu là giáo viên hoặc phụ huynh
+                    if (userState is UserProfileLoaded &&
+                        (userState.user.role == AppConstants.roleTeacher ||
+                         userState.user.role == AppConstants.roleParent)) {
+                      print('Showing teacher tools for role: ${userState.user.role}');
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Công cụ giáo viên',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocWrapper(
+                                      child: const CreateQuizPage(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.purple.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.create,
+                                        color: Colors.purple,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Tạo bài học mới',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Tạo bài học tùy chỉnh cho trẻ',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocWrapper(
+                                      child: const ManageQuizzesPage(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.library_books,
+                                        color: Colors.blue,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Quản lý bài học',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Xem và chỉnh sửa bài học đã tạo',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
 
                 // Recent activities section
                 const Text(
@@ -767,7 +1017,50 @@ class _HomePageState extends State<HomePage> {
               color: Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 8),
+
+          // User role
+          BlocBuilder<UserBloc, UserState>(
+            builder: (context, userState) {
+              if (userState is UserInitial) {
+                context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
+                return const SizedBox.shrink();
+              }
+
+              if (userState is UserProfileLoaded) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getRoleIcon(userState.user.role),
+                        color: Colors.purple,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getRoleName(userState.user.role),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.purple,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+
+          const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
               context.read<AuthBloc>().add(const SignOutRequested());
@@ -815,6 +1108,32 @@ class _HomePageState extends State<HomePage> {
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _getRoleName(String roleKey) {
+    switch (roleKey) {
+      case AppConstants.roleParent:
+        return 'Phụ huynh';
+      case AppConstants.roleTeacher:
+        return 'Giáo viên';
+      case AppConstants.roleStudent:
+        return 'Học sinh';
+      default:
+        return 'Người dùng';
+    }
+  }
+
+  IconData _getRoleIcon(String roleKey) {
+    switch (roleKey) {
+      case AppConstants.roleParent:
+        return Icons.family_restroom;
+      case AppConstants.roleTeacher:
+        return Icons.school;
+      case AppConstants.roleStudent:
+        return Icons.face;
+      default:
+        return Icons.person;
     }
   }
 }
