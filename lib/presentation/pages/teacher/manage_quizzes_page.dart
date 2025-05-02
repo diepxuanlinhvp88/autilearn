@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../widgets/common/bloc_wrapper.dart';
 import '../teacher/create_quiz_page.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/quiz_model.dart';
@@ -22,8 +21,10 @@ class ManageQuizzesPage extends StatefulWidget {
 class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, authState) {
+    return BlocProvider<QuizBloc>(
+      create: (context) => getIt<QuizBloc>(),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
         if (authState is Authenticated) {
           // Load quizzes created by this user
           context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
@@ -31,21 +32,7 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
           return Scaffold(
             appBar: AppBar(
               title: const Text('Quản lý bài học'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => BlocWrapper(
-                          child: const CreateQuizPage(),
-                        ),
-                      ),
-                    );
-                  },
-                  tooltip: 'Tạo bài học mới',
-                ),
-              ],
+
             ),
             body: BlocConsumer<QuizBloc, QuizState>(
               listener: (context, state) {
@@ -138,9 +125,7 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => BlocWrapper(
-                        child: const CreateQuizPage(),
-                      ),
+                      builder: (context) => const CreateQuizPage(),
                     ),
                   );
                 },
@@ -159,7 +144,8 @@ class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
             );
           }
         },
-      );
+      ),
+    );
   }
 
   Widget _buildQuizCard(BuildContext context, QuizModel quiz) {

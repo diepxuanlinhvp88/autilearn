@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../teacher/create_quiz_page.dart';
 import '../teacher/manage_quizzes_page.dart';
-import '../../widgets/common/bloc_wrapper.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/quiz_model.dart';
 import '../../../main.dart';
@@ -13,6 +12,11 @@ import '../../../presentation/blocs/quiz/quiz_bloc.dart';
 import '../../../presentation/blocs/quiz/quiz_event.dart';
 import '../../../presentation/blocs/quiz/quiz_state.dart';
 import '../../../presentation/blocs/user/user_bloc.dart';
+import '../../../presentation/blocs/user/user_progress_bloc.dart';
+import '../../../presentation/blocs/user/user_progress_event.dart';
+import '../../../presentation/blocs/user/user_progress_state.dart';
+import '../../../data/models/user_progress_model.dart';
+import '../../../data/repositories/quiz_repository.dart';
 import '../../../presentation/blocs/user/user_event.dart';
 import '../../../presentation/blocs/user/user_state.dart';
 import '../../../data/models/user_model.dart';
@@ -78,9 +82,7 @@ class _HomePageState extends State<HomePage> {
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => BlocWrapper(
-                                  child: const CreateQuizPage(),
-                                ),
+                                builder: (context) => const CreateQuizPage(),
                               ),
                             );
                           },
@@ -364,9 +366,7 @@ class _HomePageState extends State<HomePage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => BlocWrapper(
-                                      child: const CreateQuizPage(),
-                                    ),
+                                    builder: (context) => const CreateQuizPage(),
                                   ),
                                 );
                               },
@@ -426,9 +426,7 @@ class _HomePageState extends State<HomePage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => BlocWrapper(
-                                      child: const ManageQuizzesPage(),
-                                    ),
+                                    builder: (context) => const ManageQuizzesPage(),
                                   ),
                                 );
                               },
@@ -567,70 +565,225 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildRecentActivities(String userId) {
+    return BlocProvider(
+      create: (context) => getIt<UserProgressBloc>()..add(LoadUserProgress(userId)),
+      child: BlocBuilder<UserProgressBloc, UserProgressState>(
+        builder: (context, state) {
+          if (state is UserProgressLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (state is UserProgressLoaded) {
+            final progressList = state.progressList;
+
+            if (progressList.isEmpty) {
+              return const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Text(
+                      'Chưa có hoạt động nào gần đây',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            // Chỉ hiển thị 5 hoạt động gần nhất
+            final recentActivities = progressList.take(5).toList();
+
+            return Column(
+              children: recentActivities.map((progress) {
+                // Tìm quiz tương ứng
+                return FutureBuilder<QuizModel?>(
+                  future: _getQuizById(progress.quizId),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const SizedBox.shrink();
+                    }
+
+                    final quiz = snapshot.data!;
+                    IconData icon;
+                    Color color;
+
+                    switch (quiz.type) {
+                      case AppConstants.choicesQuiz:
+                        icon = Icons.check_circle;
+                        color = Colors.blue;
+                        break;
+                      case AppConstants.pairingQuiz:
+                        icon = Icons.compare_arrows;
+                        color = Colors.green;
+                        break;
+                      case AppConstants.sequentialQuiz:
+                        icon = Icons.sort;
+                        color = Colors.orange;
+                        break;
+                      default:
+                        icon = Icons.quiz;
+                        color = Colors.purple;
+                    }
+
+                    final percentComplete = progress.score / progress.totalQuestions;
+                    final formattedDate = _formatDate(progress.completedAt);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: _buildActivityCard(
+                        title: quiz.title,
+                        subtitle: 'Hoàn thành: ${(percentComplete * 100).toInt()}% - $formattedDate',
+                        icon: icon,
+                        color: color,
+                        progress: percentComplete,
+                        onTap: () {
+                          // Mở bài học tương ứng
+                          switch (quiz.type) {
+                            case AppConstants.choicesQuiz:
+                              Navigator.of(context).pushNamed(AppRouter.choicesQuiz);
+                              break;
+                            case AppConstants.pairingQuiz:
+                              Navigator.of(context).pushNamed(AppRouter.pairingQuiz);
+                              break;
+                            case AppConstants.sequentialQuiz:
+                              Navigator.of(context).pushNamed(AppRouter.sequentialQuiz);
+                              break;
+                          }
+                        },
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+            );
+          } else if (state is UserProgressError) {
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(
+                  child: Text(
+                    'Lỗi: ${state.message}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text(
+                  'Đang tải hoạt động gần đây...',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Hàm lấy thông tin quiz từ ID
+  Future<QuizModel?> _getQuizById(String quizId) async {
+    final result = await getIt<QuizRepository>().getQuizById(quizId);
+    return result.fold(
+      (error) => null,
+      (quiz) => quiz,
+    );
+  }
+
+  // Hàm định dạng ngày tháng
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        return '${difference.inMinutes} phút trước';
+      }
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
   Widget _buildActivityCard({
     required String title,
     required String subtitle,
     required IconData icon,
     required Color color,
     required double progress,
+    VoidCallback? onTap,
   }) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                    ),
                   ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              borderRadius: BorderRadius.circular(4),
-              minHeight: 8,
-            ),
-          ],
+                  if (onTap != null)
+                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                borderRadius: BorderRadius.circular(4),
+                minHeight: 8,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -699,8 +852,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildQuizzesTab(Authenticated authState) {
-    return BlocBuilder<QuizBloc, QuizState>(
-      builder: (context, state) {
+    return BlocProvider(
+      create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
+      child: BlocBuilder<QuizBloc, QuizState>(
+        builder: (context, state) {
         if (state is QuizLoading) {
           return const Center(
             child: CircularProgressIndicator(),
@@ -811,7 +966,8 @@ class _HomePageState extends State<HomePage> {
         return const Center(
           child: Text('Không có dữ liệu'),
         );
-      },
+        },
+      ),
     );
   }
 

@@ -39,7 +39,6 @@ void setupDependencies() {
   getIt.registerLazySingleton<FirebaseService>(() => FirebaseService());
   getIt.registerLazySingleton<StorageService>(() => StorageService());
   getIt.registerLazySingleton<AudioService>(() => AudioService());
-  getIt.registerLazySingleton<SampleDataService>(() => SampleDataService());
   getIt.registerLazySingleton<UserRoleService>(() => UserRoleService());
 
   // Data sources

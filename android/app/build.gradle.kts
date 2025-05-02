@@ -13,6 +13,10 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
+    aaptOptions {
+        noCompress += listOf("tflite")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -34,6 +38,9 @@ android {
 
         // Add this for Firebase Auth reCAPTCHA verification
         manifestPlaceholders["appAuthRedirectScheme"] = "com.example.autilearn"
+
+        // Enable multidex
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -45,10 +52,18 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            // Enable ProGuard
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("androidx.multidex:multidex:2.0.1")
 }

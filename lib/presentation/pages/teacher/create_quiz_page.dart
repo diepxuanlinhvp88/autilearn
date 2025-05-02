@@ -47,8 +47,10 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, authState) {
+    return BlocProvider<QuizBloc>(
+      create: (context) => getIt<QuizBloc>(),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
         if (authState is Authenticated) {
           return Scaffold(
             appBar: AppBar(
@@ -357,6 +359,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
             );
           }
         },
-      );
+      ),
+    );
   }
 }

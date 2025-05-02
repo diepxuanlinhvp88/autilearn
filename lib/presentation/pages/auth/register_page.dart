@@ -6,7 +6,6 @@ import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../app/routes.dart';
-import '../../../core/services/sample_data_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -80,17 +79,8 @@ class _RegisterPageState extends State<RegisterPage> {
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is Authenticated) {
-              // Generate sample data for new user
-              final sampleDataService = getIt<SampleDataService>();
-              sampleDataService.generateSampleData(state.user.uid).then((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Đã tạo dữ liệu mẫu cho tài khoản mới'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                Navigator.of(context).pushReplacementNamed(AppRouter.home);
-              });
+              // Chuyển hướng đến trang chủ sau khi đăng ký thành công
+              Navigator.of(context).pushReplacementNamed(AppRouter.home);
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

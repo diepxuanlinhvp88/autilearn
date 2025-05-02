@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/question_model.dart';
+import '../image_picker_widget.dart';
 
 class QuestionFormWidget extends StatefulWidget {
   final String quizType;
@@ -22,16 +23,17 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
   final _formKey = GlobalKey<FormState>();
   final _questionTextController = TextEditingController();
   final _hintController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   final _audioUrlController = TextEditingController();
-  
+
+  String? _imageUrl;
+
   // For choices quiz
   String? _correctOptionId;
   List<AnswerOption> _options = [];
-  
+
   // For sequential quiz
   List<String> _correctSequence = [];
-  
+
   // For pairing quiz
   Map<String, String> _correctPairs = {};
   List<AnswerOption> _leftOptions = [];
@@ -40,13 +42,13 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
   @override
   void initState() {
     super.initState();
-    
+
     if (widget.initialQuestion != null) {
       _questionTextController.text = widget.initialQuestion!.text;
       _hintController.text = widget.initialQuestion!.hint ?? '';
-      _imageUrlController.text = widget.initialQuestion!.imageUrl ?? '';
+      _imageUrl = widget.initialQuestion!.imageUrl;
       _audioUrlController.text = widget.initialQuestion!.audioUrl ?? '';
-      
+
       if (widget.quizType == AppConstants.choicesQuiz) {
         _options = List.from(widget.initialQuestion!.options);
         _correctOptionId = widget.initialQuestion!.correctOptionId;
@@ -57,7 +59,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         // Split options into left and right for pairing quiz
         final allOptions = widget.initialQuestion!.options;
         _correctPairs = Map.from(widget.initialQuestion!.correctPairs ?? {});
-        
+
         // Separate left and right options based on correctPairs
         for (var option in allOptions) {
           if (_correctPairs.containsKey(option.id)) {
@@ -74,7 +76,6 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
   void dispose() {
     _questionTextController.dispose();
     _hintController.dispose();
-    _imageUrlController.dispose();
     _audioUrlController.dispose();
     super.dispose();
   }
@@ -85,7 +86,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
       _options.add(AnswerOption(
         id: newId,
         text: '',
-        imageUrl: '',
+        imageUrl: null,
       ));
     });
   }
@@ -94,13 +95,13 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
     setState(() {
       final removedOption = _options[index];
       _options.removeAt(index);
-      
+
       // Update correctOptionId if needed
-      if (widget.quizType == AppConstants.choicesQuiz && 
+      if (widget.quizType == AppConstants.choicesQuiz &&
           removedOption.id == _correctOptionId) {
         _correctOptionId = null;
       }
-      
+
       // Update correctSequence if needed
       if (widget.quizType == AppConstants.sequentialQuiz) {
         _correctSequence.remove(removedOption.id);
@@ -115,14 +116,14 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         _leftOptions.add(AnswerOption(
           id: newId,
           text: '',
-          imageUrl: '',
+          imageUrl: null,
         ));
       } else {
         final newId = _rightOptions.isEmpty ? 'R1' : 'R${_rightOptions.length + 1}';
         _rightOptions.add(AnswerOption(
           id: newId,
           text: '',
-          imageUrl: '',
+          imageUrl: null,
         ));
       }
     });
@@ -133,13 +134,13 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
       if (isLeft) {
         final removedOption = _leftOptions[index];
         _leftOptions.removeAt(index);
-        
+
         // Remove from pairs
         _correctPairs.remove(removedOption.id);
       } else {
         final removedOption = _rightOptions[index];
         _rightOptions.removeAt(index);
-        
+
         // Remove from pairs
         _correctPairs.removeWhere((key, value) => value == removedOption.id);
       }
@@ -152,7 +153,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
     });
   }
 
-  void _updateOptionImageUrl(int index, String imageUrl) {
+  void _updateOptionImageUrl(int index, String? imageUrl) {
     setState(() {
       _options[index] = _options[index].copyWith(imageUrl: imageUrl);
     });
@@ -168,7 +169,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
     });
   }
 
-  void _updatePairingOptionImageUrl(int index, String imageUrl, bool isLeft) {
+  void _updatePairingOptionImageUrl(int index, String? imageUrl, bool isLeft) {
     setState(() {
       if (isLeft) {
         _leftOptions[index] = _leftOptions[index].copyWith(imageUrl: imageUrl);
@@ -190,7 +191,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
     }
 
     QuestionModel question;
-    
+
     if (widget.quizType == AppConstants.choicesQuiz) {
       question = QuestionModel(
         id: widget.initialQuestion?.id ?? '',
@@ -200,7 +201,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         type: widget.quizType,
         options: _options,
         correctOptionId: _correctOptionId,
-        imageUrl: _imageUrlController.text.isEmpty ? null : _imageUrlController.text,
+        imageUrl: _imageUrl,
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
@@ -213,14 +214,14 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         type: widget.quizType,
         options: _options,
         correctSequence: _correctSequence,
-        imageUrl: _imageUrlController.text.isEmpty ? null : _imageUrlController.text,
+        imageUrl: _imageUrl,
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
     } else {
       // Combine left and right options for pairing quiz
       final allOptions = [..._leftOptions, ..._rightOptions];
-      
+
       question = QuestionModel(
         id: widget.initialQuestion?.id ?? '',
         quizId: widget.initialQuestion?.quizId ?? '',
@@ -229,12 +230,12 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         type: widget.quizType,
         options: allOptions,
         correctPairs: _correctPairs,
-        imageUrl: _imageUrlController.text.isEmpty ? null : _imageUrlController.text,
+        imageUrl: _imageUrl,
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
     }
-    
+
     widget.onSave(question);
   }
 
@@ -262,7 +263,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             maxLines: 2,
           ),
           const SizedBox(height: 16),
-          
+
           // Hint
           TextFormField(
             controller: _hintController,
@@ -274,18 +275,28 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             maxLines: 2,
           ),
           const SizedBox(height: 16),
-          
-          // Image URL
-          TextFormField(
-            controller: _imageUrlController,
-            decoration: const InputDecoration(
-              labelText: 'URL hình ảnh (không bắt buộc)',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.image),
-            ),
+
+          // Image Picker
+          const Text(
+            'Hình ảnh (không bắt buộc)',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          ImagePickerWidget(
+            initialImageUrl: _imageUrl,
+            onImageSelected: (url) {
+              setState(() {
+                _imageUrl = url;
+              });
+            },
+            onImageRemoved: () {
+              setState(() {
+                _imageUrl = null;
+              });
+            },
           ),
           const SizedBox(height: 16),
-          
+
           // Audio URL
           TextFormField(
             controller: _audioUrlController,
@@ -296,7 +307,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Type-specific form fields
           if (widget.quizType == AppConstants.choicesQuiz)
             _buildChoicesForm(),
@@ -304,9 +315,9 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             _buildSequentialForm(),
           if (widget.quizType == AppConstants.pairingQuiz)
             _buildPairingForm(),
-            
+
           const SizedBox(height: 24),
-          
+
           // Save button
           SizedBox(
             width: double.infinity,
@@ -340,7 +351,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         // Options list
         ListView.builder(
           shrinkWrap: true,
@@ -367,7 +378,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        
+
                         // Option text field
                         Expanded(
                           child: TextFormField(
@@ -385,7 +396,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                             onChanged: (value) => _updateOptionText(index, value),
                           ),
                         ),
-                        
+
                         // Remove button
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
@@ -394,18 +405,19 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
-                    // Image URL field
-                    TextFormField(
-                      initialValue: option.imageUrl ?? '',
-                      decoration: const InputDecoration(
-                        labelText: 'URL hình ảnh (không bắt buộc)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.image),
-                      ),
-                      onChanged: (value) => _updateOptionImageUrl(index, value),
+
+                    // Image Picker
+                    const Text(
+                      'Hình ảnh (không bắt buộc)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                    
+                    const SizedBox(height: 8),
+                    ImagePickerWidget(
+                      initialImageUrl: option.imageUrl,
+                      onImageSelected: (url) => _updateOptionImageUrl(index, url),
+                      onImageRemoved: () => _updateOptionImageUrl(index, null),
+                    ),
+
                     // Correct answer checkbox
                     CheckboxListTile(
                       title: const Text('Đây là đáp án đúng'),
@@ -426,14 +438,14 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             );
           },
         ),
-        
+
         // Add option button
         TextButton.icon(
           onPressed: _addOption,
           icon: const Icon(Icons.add),
           label: const Text('Thêm lựa chọn'),
         ),
-        
+
         // Validation message for correct option
         if (_options.isNotEmpty && _correctOptionId == null)
           const Padding(
@@ -459,7 +471,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         // Options list
         ListView.builder(
           shrinkWrap: true,
@@ -484,7 +496,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        
+
                         // Option text field
                         Expanded(
                           child: TextFormField(
@@ -502,7 +514,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                             onChanged: (value) => _updateOptionText(index, value),
                           ),
                         ),
-                        
+
                         // Remove button
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
@@ -511,16 +523,17 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
-                    // Image URL field
-                    TextFormField(
-                      initialValue: option.imageUrl ?? '',
-                      decoration: const InputDecoration(
-                        labelText: 'URL hình ảnh (không bắt buộc)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.image),
-                      ),
-                      onChanged: (value) => _updateOptionImageUrl(index, value),
+
+                    // Image Picker
+                    const Text(
+                      'Hình ảnh (không bắt buộc)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    ImagePickerWidget(
+                      initialImageUrl: option.imageUrl,
+                      onImageSelected: (url) => _updateOptionImageUrl(index, url),
+                      onImageRemoved: () => _updateOptionImageUrl(index, null),
                     ),
                   ],
                 ),
@@ -528,16 +541,16 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             );
           },
         ),
-        
+
         // Add option button
         TextButton.icon(
           onPressed: _addOption,
           icon: const Icon(Icons.add),
           label: const Text('Thêm mục'),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Correct sequence section
         if (_options.isNotEmpty)
           Column(
@@ -551,7 +564,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // Reorderable list for sequence
               ReorderableListView(
                 shrinkWrap: true,
@@ -570,7 +583,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                     (o) => o.id == optionId,
                     orElse: () => const AnswerOption(id: '', text: 'Unknown'),
                   );
-                  
+
                   return ListTile(
                     key: Key(optionId),
                     leading: const Icon(Icons.drag_handle),
@@ -586,7 +599,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                   );
                 }).toList(),
               ),
-              
+
               // Available options to add to sequence
               const SizedBox(height: 8),
               const Text('Thêm vào thứ tự:'),
@@ -624,7 +637,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -648,7 +661,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        
+
                         // Option text field
                         Expanded(
                           child: TextFormField(
@@ -666,7 +679,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                             onChanged: (value) => _updatePairingOptionText(index, value, true),
                           ),
                         ),
-                        
+
                         // Remove button
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
@@ -675,18 +688,19 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
-                    // Image URL field
-                    TextFormField(
-                      initialValue: option.imageUrl ?? '',
-                      decoration: const InputDecoration(
-                        labelText: 'URL hình ảnh (không bắt buộc)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.image),
-                      ),
-                      onChanged: (value) => _updatePairingOptionImageUrl(index, value, true),
+
+                    // Image Picker
+                    const Text(
+                      'Hình ảnh (không bắt buộc)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                    
+                    const SizedBox(height: 8),
+                    ImagePickerWidget(
+                      initialImageUrl: option.imageUrl,
+                      onImageSelected: (url) => _updatePairingOptionImageUrl(index, url, true),
+                      onImageRemoved: () => _updatePairingOptionImageUrl(index, null, true),
+                    ),
+
                     // Pair selection dropdown
                     if (_rightOptions.isNotEmpty)
                       DropdownButtonFormField<String>(
@@ -714,16 +728,16 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             );
           },
         ),
-        
+
         // Add left option button
         TextButton.icon(
           onPressed: () => _addPairingOption(true),
           icon: const Icon(Icons.add),
           label: const Text('Thêm mục bên trái'),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Right column items
         const Text(
           'Cột bên phải:',
@@ -733,7 +747,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
           ),
         ),
         const SizedBox(height: 8),
-        
+
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -757,7 +771,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        
+
                         // Option text field
                         Expanded(
                           child: TextFormField(
@@ -775,7 +789,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                             onChanged: (value) => _updatePairingOptionText(index, value, false),
                           ),
                         ),
-                        
+
                         // Remove button
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
@@ -784,16 +798,17 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
-                    // Image URL field
-                    TextFormField(
-                      initialValue: option.imageUrl ?? '',
-                      decoration: const InputDecoration(
-                        labelText: 'URL hình ảnh (không bắt buộc)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.image),
-                      ),
-                      onChanged: (value) => _updatePairingOptionImageUrl(index, value, false),
+
+                    // Image Picker
+                    const Text(
+                      'Hình ảnh (không bắt buộc)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    ImagePickerWidget(
+                      initialImageUrl: option.imageUrl,
+                      onImageSelected: (url) => _updatePairingOptionImageUrl(index, url, false),
+                      onImageRemoved: () => _updatePairingOptionImageUrl(index, null, false),
                     ),
                   ],
                 ),
@@ -801,16 +816,16 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
             );
           },
         ),
-        
+
         // Add right option button
         TextButton.icon(
           onPressed: () => _addPairingOption(false),
           icon: const Icon(Icons.add),
           label: const Text('Thêm mục bên phải'),
         ),
-        
+
         // Validation message for pairs
-        if (_leftOptions.isNotEmpty && _rightOptions.isNotEmpty && 
+        if (_leftOptions.isNotEmpty && _rightOptions.isNotEmpty &&
             _leftOptions.any((option) => !_correctPairs.containsKey(option.id)))
           const Padding(
             padding: EdgeInsets.only(top: 8.0),
@@ -833,7 +848,7 @@ extension AnswerOptionExtension on AnswerOption {
     return AnswerOption(
       id: id ?? this.id,
       text: text ?? this.text,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrl: imageUrl, // Allow null to be passed explicitly
     );
   }
 }
