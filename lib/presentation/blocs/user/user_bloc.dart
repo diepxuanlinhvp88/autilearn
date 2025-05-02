@@ -20,6 +20,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     LoadUserProfile event,
     Emitter<UserState> emit,
   ) async {
+    // Kiểm tra xem đã có dữ liệu người dùng chưa
+    if (state is UserProfileLoaded) {
+      print('User profile already loaded, skipping fetch');
+      return;
+    }
+
     print('Loading user profile for userId: ${event.userId}');
     emit(const UserLoading());
     final result = await userRepository.getUserById(event.userId);

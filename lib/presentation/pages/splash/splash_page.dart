@@ -54,6 +54,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
         // Kiểm tra người dùng hiện tại
         final user = _auth.currentUser;
         if (user != null) {
+          print('SplashPage: Ensuring user exists in Firestore');
           // Đảm bảo người dùng có trong Firestore
           context.read<AuthBloc>().add(EnsureUserInFirestore(
                 userId: user.uid,

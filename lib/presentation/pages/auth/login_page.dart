@@ -53,6 +53,7 @@ class _LoginPageState extends State<LoginPage> {
           listener: (context, state) {
             if (state is Authenticated) {
               // Đảm bảo người dùng có trong Firestore
+              print('LoginPage: Ensuring user exists in Firestore');
               context.read<AuthBloc>().add(EnsureUserInFirestore(
                     userId: state.user.uid,
                     name: state.user.displayName,

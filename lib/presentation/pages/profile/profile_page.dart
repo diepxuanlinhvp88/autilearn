@@ -22,15 +22,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
-        ),
-        BlocProvider<UserBloc>(
-          create: (context) => getIt<UserBloc>(),
-        ),
-      ],
+    return BlocProvider<AuthBloc>(
+      create: (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is Authenticated) {
@@ -105,8 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           BlocBuilder<UserBloc, UserState>(
                             builder: (context, userState) {
                               if (userState is UserInitial) {
-                                context.read<UserBloc>().add(LoadUserProfile(state.user.uid));
-                                return const SizedBox.shrink();
+                                return const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2));
                               }
 
                               if (userState is UserProfileLoaded) {
