@@ -4,6 +4,12 @@ import '../models/user_model.dart';
 import '../models/quiz_model.dart';
 import '../models/question_model.dart';
 import '../models/user_progress_model.dart';
+import '../models/badge_model.dart';
+import '../models/reward_model.dart';
+import '../models/currency_model.dart';
+import '../models/analytics_model.dart';
+import '../models/skill_assessment_model.dart';
+import '../models/schedule_model.dart';
 
 class FirebaseDataSource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -263,6 +269,562 @@ class FirebaseDataSource {
     try {
       final docRef = await _firestore.collection('user_progress').add(progress.toMap());
       return Right(docRef.id);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  // Phương thức cho hệ thống huy hiệu
+  Future<Either<String, List<BadgeModel>>> getUserBadges(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('badges')
+          .get();
+
+      final badges = querySnapshot.docs
+          .map((doc) => BadgeModel.fromFirestore(doc))
+          .toList();
+
+      return Right(badges);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, String>> unlockBadge(String userId, BadgeModel badge) async {
+    try {
+      final updatedBadge = badge.copyWith(
+        isUnlocked: true,
+        unlockedAt: DateTime.now(),
+      );
+
+      final docRef = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('badges')
+          .doc(badge.id)
+          .set(updatedBadge.toMap());
+
+      return Right(badge.id);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  // Phương thức cho hệ thống phần thưởng
+  Future<Either<String, List<RewardModel>>> getAvailableRewards() async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('rewards')
+          .get();
+
+      final rewards = querySnapshot.docs
+          .map((doc) => RewardModel.fromFirestore(doc))
+          .toList();
+
+      return Right(rewards);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, List<RewardModel>>> getUserRewards(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('rewards')
+          .get();
+
+      final rewards = querySnapshot.docs
+          .map((doc) => RewardModel.fromFirestore(doc))
+          .toList();
+
+      return Right(rewards);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, String>> purchaseReward(String userId, RewardModel reward) async {
+    try {
+      final updatedReward = reward.copyWith(
+        isPurchased: true,
+        purchasedAt: DateTime.now(),
+      );
+
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('rewards')
+          .doc(reward.id)
+          .set(updatedReward.toMap());
+
+      return Right(reward.id);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  // Phương thức cho hệ thống tiền tệ
+  Future<Either<String, CurrencyModel>> getUserCurrency(String userId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('currency')
+          .doc('main')
+          .get();
+
+      if (!doc.exists) {
+        // Tạo mới nếu chưa tồn tại
+        final newCurrency = CurrencyModel(
+          userId: userId,
+          stars: 0,
+          coins: 0,
+          gems: 0,
+          lastUpdated: DateTime.now(),
+        );
+
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('currency')
+            .doc('main')
+            .set(newCurrency.toMap());
+
+        return Right(newCurrency);
+      }
+
+      return Right(CurrencyModel.fromFirestore(doc));
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> updateUserCurrency(CurrencyModel currency) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(currency.userId)
+          .collection('currency')
+          .doc('main')
+          .set(currency.toMap());
+
+      return const Right(true);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  // Phương thức cho phân tích dữ liệu
+  Future<Either<String, AnalyticsModel>> getUserAnalytics(String userId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('analytics')
+          .doc('main')
+          .get();
+
+      if (!doc.exists) {
+        // Tạo mới nếu chưa tồn tại
+        final newAnalytics = AnalyticsModel(
+          userId: userId,
+          lastUpdated: DateTime.now(),
+        );
+
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('analytics')
+            .doc('main')
+            .set(newAnalytics.toMap());
+
+        return Right(newAnalytics);
+      }
+
+      return Right(AnalyticsModel.fromFirestore(doc));
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> updateUserAnalytics(AnalyticsModel analytics) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(analytics.userId)
+          .collection('analytics')
+          .doc('main')
+          .set(analytics.toMap());
+
+      return const Right(true);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, List<StudentAnalytics>>> getStudentAnalytics(String teacherId) async {
+    try {
+      // Lấy danh sách học sinh của giáo viên
+      final studentsQuery = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'student')
+          .get();
+
+      final List<StudentAnalytics> studentAnalyticsList = [];
+
+      for (final studentDoc in studentsQuery.docs) {
+        final studentId = studentDoc.id;
+        final studentData = studentDoc.data();
+        final studentName = studentData['name'] ?? 'Học sinh';
+
+        // Lấy phân tích dữ liệu của học sinh
+        final analyticsDoc = await _firestore
+            .collection('users')
+            .doc(studentId)
+            .collection('analytics')
+            .doc('main')
+            .get();
+
+        if (analyticsDoc.exists) {
+          final analytics = AnalyticsModel.fromFirestore(analyticsDoc);
+          studentAnalyticsList.add(StudentAnalytics(
+            studentId: studentId,
+            studentName: studentName,
+            analytics: analytics,
+          ));
+        }
+      }
+
+      return Right(studentAnalyticsList);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> updateAnalyticsFromProgress(String userId) async {
+    try {
+      // Lấy tất cả tiến trình của người dùng
+      final progressQuery = await _firestore
+          .collection('user_progress')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (progressQuery.docs.isEmpty) {
+        return const Right(true); // Không có dữ liệu tiến trình
+      }
+
+      // Lấy phân tích dữ liệu hiện tại hoặc tạo mới
+      final analyticsResult = await getUserAnalytics(userId);
+
+      return analyticsResult.fold(
+        (error) => Left(error),
+        (analytics) async {
+          // Tổng hợp dữ liệu
+          int totalQuizzesTaken = 0;
+          int totalCorrectAnswers = 0;
+          int totalQuestions = 0;
+          int totalTimeSpentSeconds = 0;
+          int totalStarsEarned = 0;
+          Map<String, int> quizTypeDistribution = {};
+          Map<String, List<double>> performanceByQuizType = {};
+          List<QuizPerformance> recentPerformance = [];
+
+          // Lấy thông tin chi tiết về các bài kiểm tra
+          for (final progressDoc in progressQuery.docs) {
+            final progressData = progressDoc.data();
+            final quizId = progressData['quizId'] as String;
+
+            // Lấy thông tin bài kiểm tra
+            final quizDoc = await _firestore.collection('quizzes').doc(quizId).get();
+
+            if (quizDoc.exists) {
+              final quizData = quizDoc.data()!;
+              final quizTitle = quizData['title'] as String? ?? 'Bài kiểm tra';
+              final quizType = quizData['type'] as String? ?? 'unknown';
+
+              // Cập nhật thống kê
+              totalQuizzesTaken++;
+              final score = progressData['score'] as int? ?? 0;
+              final totalQuestionsInQuiz = progressData['totalQuestions'] as int? ?? 0;
+              totalCorrectAnswers += score;
+              totalQuestions += totalQuestionsInQuiz;
+              totalTimeSpentSeconds += progressData['timeSpentSeconds'] as int? ?? 0;
+              totalStarsEarned += progressData['starsEarned'] as int? ?? 0;
+
+              // Cập nhật phân phối loại bài kiểm tra
+              quizTypeDistribution[quizType] = (quizTypeDistribution[quizType] ?? 0) + 1;
+
+              // Cập nhật hiệu suất theo loại bài kiểm tra
+              if (!performanceByQuizType.containsKey(quizType)) {
+                performanceByQuizType[quizType] = [];
+              }
+
+              if (totalQuestionsInQuiz > 0) {
+                performanceByQuizType[quizType]!.add(score / totalQuestionsInQuiz);
+              }
+
+              // Thêm vào danh sách hiệu suất gần đây
+              final completedAt = (progressData['completedAt'] as Timestamp).toDate();
+
+              recentPerformance.add(QuizPerformance(
+                quizId: quizId,
+                quizTitle: quizTitle,
+                quizType: quizType,
+                score: score,
+                totalQuestions: totalQuestionsInQuiz,
+                timeSpentSeconds: progressData['timeSpentSeconds'] as int? ?? 0,
+                starsEarned: progressData['starsEarned'] as int? ?? 0,
+                completedAt: completedAt,
+              ));
+            }
+          }
+
+          // Sắp xếp hiệu suất gần đây theo thời gian
+          recentPerformance.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+
+          // Giới hạn số lượng hiệu suất gần đây
+          if (recentPerformance.length > 10) {
+            recentPerformance = recentPerformance.sublist(0, 10);
+          }
+
+          // Tính toán hiệu suất trung bình theo loại bài kiểm tra
+          final Map<String, double> avgPerformanceByQuizType = {};
+          performanceByQuizType.forEach((type, performances) {
+            if (performances.isNotEmpty) {
+              final sum = performances.reduce((a, b) => a + b);
+              avgPerformanceByQuizType[type] = sum / performances.length;
+            } else {
+              avgPerformanceByQuizType[type] = 0.0;
+            }
+          });
+
+          // Cập nhật phân tích dữ liệu
+          final updatedAnalytics = analytics.copyWith(
+            totalQuizzesTaken: totalQuizzesTaken,
+            totalCorrectAnswers: totalCorrectAnswers,
+            totalQuestions: totalQuestions,
+            totalTimeSpentSeconds: totalTimeSpentSeconds,
+            totalStarsEarned: totalStarsEarned,
+            quizTypeDistribution: quizTypeDistribution,
+            performanceByQuizType: avgPerformanceByQuizType,
+            recentPerformance: recentPerformance,
+            lastUpdated: DateTime.now(),
+          );
+
+          // Lưu phân tích dữ liệu
+          final updateResult = await updateUserAnalytics(updatedAnalytics);
+
+          return updateResult.fold(
+            (error) => Left(error),
+            (_) => const Right(true),
+          );
+        },
+      );
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  // Phương thức cho đánh giá kỹ năng
+  Future<Either<String, List<SkillAssessmentModel>>> getStudentAssessments(String studentId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('skill_assessments')
+          .where('studentId', isEqualTo: studentId)
+          .orderBy('assessmentDate', descending: true)
+          .get();
+
+      final assessments = querySnapshot.docs
+          .map((doc) => SkillAssessmentModel.fromFirestore(doc))
+          .toList();
+
+      return Right(assessments);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, List<SkillAssessmentModel>>> getTeacherAssessments(String teacherId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('skill_assessments')
+          .where('teacherId', isEqualTo: teacherId)
+          .orderBy('assessmentDate', descending: true)
+          .get();
+
+      final assessments = querySnapshot.docs
+          .map((doc) => SkillAssessmentModel.fromFirestore(doc))
+          .toList();
+
+      return Right(assessments);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, SkillAssessmentModel>> getAssessment(String assessmentId) async {
+    try {
+      final doc = await _firestore
+          .collection('skill_assessments')
+          .doc(assessmentId)
+          .get();
+
+      if (!doc.exists) {
+        return Left('Không tìm thấy đánh giá');
+      }
+
+      return Right(SkillAssessmentModel.fromFirestore(doc));
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, String>> createAssessment(SkillAssessmentModel assessment) async {
+    try {
+      final docRef = await _firestore
+          .collection('skill_assessments')
+          .add(assessment.toMap());
+
+      return Right(docRef.id);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> updateAssessment(SkillAssessmentModel assessment) async {
+    try {
+      await _firestore
+          .collection('skill_assessments')
+          .doc(assessment.id)
+          .update(assessment.toMap());
+
+      return const Right(true);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> deleteAssessment(String assessmentId) async {
+    try {
+      await _firestore
+          .collection('skill_assessments')
+          .doc(assessmentId)
+          .delete();
+
+      return const Right(true);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  // Phương thức cho lịch học và nhắc nhở
+  Future<Either<String, List<ScheduleModel>>> getUserSchedules(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('schedules')
+          .where('userId', isEqualTo: userId)
+          .orderBy('startTime', descending: false)
+          .get();
+
+      final schedules = querySnapshot.docs
+          .map((doc) => ScheduleModel.fromFirestore(doc))
+          .toList();
+
+      return Right(schedules);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, List<ScheduleModel>>> getUpcomingSchedules(String userId) async {
+    try {
+      final now = DateTime.now();
+      final querySnapshot = await _firestore
+          .collection('schedules')
+          .where('userId', isEqualTo: userId)
+          .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
+          .orderBy('startTime', descending: false)
+          .limit(10)
+          .get();
+
+      final schedules = querySnapshot.docs
+          .map((doc) => ScheduleModel.fromFirestore(doc))
+          .toList();
+
+      return Right(schedules);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, ScheduleModel>> getSchedule(String scheduleId) async {
+    try {
+      final doc = await _firestore
+          .collection('schedules')
+          .doc(scheduleId)
+          .get();
+
+      if (!doc.exists) {
+        return Left('Không tìm thấy lịch học');
+      }
+
+      return Right(ScheduleModel.fromFirestore(doc));
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, String>> createSchedule(ScheduleModel schedule) async {
+    try {
+      final docRef = await _firestore
+          .collection('schedules')
+          .add(schedule.toMap());
+
+      return Right(docRef.id);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> updateSchedule(ScheduleModel schedule) async {
+    try {
+      await _firestore
+          .collection('schedules')
+          .doc(schedule.id)
+          .update(schedule.toMap());
+
+      return const Right(true);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> deleteSchedule(String scheduleId) async {
+    try {
+      await _firestore
+          .collection('schedules')
+          .doc(scheduleId)
+          .delete();
+
+      return const Right(true);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  Future<Either<String, bool>> markScheduleAsCompleted(String scheduleId) async {
+    try {
+      await _firestore
+          .collection('schedules')
+          .doc(scheduleId)
+          .update({'isCompleted': true});
+
+      return const Right(true);
     } catch (e) {
       return Left(e.toString());
     }

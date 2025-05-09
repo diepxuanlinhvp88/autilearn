@@ -114,7 +114,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
         });
 
         try {
-          // Tải ảnh lên Firebase Storage
+          // Tải ảnh lên Imgur
           final String? downloadUrl = await _imageUploadService.uploadImage(pickedImage);
 
           if (downloadUrl != null) {
@@ -125,11 +125,11 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
             // Gọi callback để cập nhật URL ảnh
             widget.onImageSelected(downloadUrl);
           } else {
-            // Nếu không thể tải lên Firebase Storage, hiển thị hộp thoại để nhập URL thủ công
+            // Nếu không thể tải lên Imgur, hiển thị hộp thoại để nhập URL thủ công
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Không thể tải ảnh lên Firebase Storage. Bạn có thể nhập URL ảnh thủ công.'),
+                  content: Text('Không thể tải ảnh lên Imgur. Bạn có thể nhập URL ảnh thủ công.'),
                   duration: Duration(seconds: 5),
                 ),
               );
@@ -140,12 +140,12 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
             }
           }
         } catch (e) {
-          print('Error uploading image to Firebase Storage: $e');
+          print('Error uploading image to Imgur: $e');
           // Nếu có lỗi khi tải lên, hiển thị hộp thoại để nhập URL thủ công
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Không thể tải ảnh lên Firebase Storage. Bạn có thể nhập URL ảnh thủ công.'),
+                content: Text('Không thể tải ảnh lên Imgur. Bạn có thể nhập URL ảnh thủ công.'),
                 duration: Duration(seconds: 5),
               ),
             );
@@ -225,22 +225,65 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
     }
   }
 
-  void _setImageUrl(String url) {
-    setState(() {
-      _imageUrl = url;
-      _imageFile = null;
-    });
+  void _setImageUrl(String url) async {
+    // Hiển thị thông báo đang tải lên
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đang tải ảnh lên Imgur...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
 
-    // Gọi callback để cập nhật URL ảnh
-    widget.onImageSelected(url);
+    // Tải ảnh lên Imgur từ URL
+    final String? imgurUrl = await _imageUploadService.uploadImageFromUrl(url);
+
+    if (imgurUrl != null) {
+      setState(() {
+        _imageUrl = imgurUrl;
+        _imageFile = null;
+      });
+
+      // Gọi callback để cập nhật URL ảnh
+      widget.onImageSelected(imgurUrl);
+
+      // Hiển thị thông báo thành công
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tải ảnh lên Imgur thành công!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      // Nếu không thể tải lên Imgur, sử dụng URL gốc
+      setState(() {
+        _imageUrl = url;
+        _imageFile = null;
+      });
+
+      // Gọi callback để cập nhật URL ảnh
+      widget.onImageSelected(url);
+
+      // Hiển thị thông báo không thể tải lên Imgur
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Không thể tải ảnh lên Imgur. Sử dụng URL gốc.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   void _removeImage() {
     if (_imageUrl != null) {
-      // Nếu có URL ảnh, xóa ảnh từ Firebase Storage
-      if (_imageUrl!.startsWith('https://firebasestorage.googleapis.com')) {
-        _imageUploadService.deleteImage(_imageUrl!);
-      }
+      // Nếu có URL ảnh, xóa ảnh (lưu ý: Imgur API miễn phí không hỗ trợ xóa ảnh)
+      _imageUploadService.deleteImage(_imageUrl!);
+
 
       setState(() {
         _imageUrl = null;

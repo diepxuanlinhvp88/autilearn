@@ -3,6 +3,7 @@ class AppConstants {
   static const String choicesQuiz = 'choices_quiz';
   static const String pairingQuiz = 'pairing_quiz';
   static const String sequentialQuiz = 'sequential_quiz';
+  static const String emotionsQuiz = 'emotions_quiz'; // Bài học nhận diện cảm xúc
 
   // User Roles
   static const String roleParent = 'parent';

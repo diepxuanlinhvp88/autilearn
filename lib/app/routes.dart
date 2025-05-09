@@ -8,6 +8,18 @@ import '../presentation/pages/home/home_page.dart';
 import '../presentation/pages/quiz/choices_quiz_page.dart';
 import '../presentation/pages/quiz/pairing_quiz_page.dart';
 import '../presentation/pages/quiz/sequential_quiz_page.dart';
+import '../presentation/pages/quiz/emotions_quiz_page.dart';
+import '../presentation/pages/quiz/manage_quizzes_page.dart';
+import '../presentation/pages/quiz/create_quiz_page.dart';
+import '../presentation/pages/quiz/edit_quiz_page.dart';
+import '../presentation/pages/quiz/question_list_page.dart';
+import '../presentation/pages/reward/badges_page.dart';
+import '../presentation/pages/reward/reward_shop_page.dart';
+import '../presentation/pages/analytics/student_analytics_page.dart';
+import '../presentation/pages/analytics/teacher_analytics_page.dart';
+import '../presentation/pages/assessment/assessment_list_page.dart';
+import '../presentation/pages/schedule/schedule_list_page.dart';
+import '../presentation/pages/schedule/calendar_page.dart';
 import '../presentation/pages/teacher/create_quiz_page.dart';
 import '../presentation/pages/teacher/edit_quiz_page.dart';
 import '../presentation/pages/teacher/manage_quizzes_page.dart';
@@ -27,6 +39,14 @@ class AppRouter {
   static const String choicesQuiz = '/quiz/choices';
   static const String pairingQuiz = '/quiz/pairing';
   static const String sequentialQuiz = '/quiz/sequential';
+  static const String emotionsQuiz = '/quiz/emotions';
+  static const String badges = '/reward/badges';
+  static const String rewardShop = '/reward/shop';
+  static const String studentAnalytics = '/analytics/student';
+  static const String teacherAnalytics = '/analytics/teacher';
+  static const String assessments = '/assessment/list';
+  static const String scheduleList = '/schedule/list';
+  static const String calendar = '/schedule/calendar';
   static const String createQuiz = '/teacher/create-quiz';
   static const String editQuiz = '/teacher/edit-quiz';
   static const String manageQuizzes = '/teacher/manage-quizzes';
@@ -56,6 +76,24 @@ class AppRouter {
       case sequentialQuiz:
         final quizId = settings.arguments as String?;
         return MaterialPageRoute(builder: (_) => SequentialQuizPage(quizId: quizId));
+      case emotionsQuiz:
+        final quizId = settings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => EmotionsQuizPage(quizId: quizId));
+      case badges:
+        return MaterialPageRoute(builder: (_) => const BadgesPage());
+      case rewardShop:
+        return MaterialPageRoute(builder: (_) => const RewardShopPage());
+      case studentAnalytics:
+        return MaterialPageRoute(builder: (_) => const StudentAnalyticsPage());
+      case teacherAnalytics:
+        return MaterialPageRoute(builder: (_) => const TeacherAnalyticsPage());
+      case assessments:
+        final studentId = settings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => AssessmentListPage(studentId: studentId));
+      case scheduleList:
+        return MaterialPageRoute(builder: (_) => const ScheduleListPage());
+      case calendar:
+        return MaterialPageRoute(builder: (_) => const CalendarPage());
       case createQuiz:
         return MaterialPageRoute(
           builder: (context) {

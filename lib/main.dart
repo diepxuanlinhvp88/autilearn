@@ -9,6 +9,11 @@ import 'core/services/storage_service.dart';
 import 'core/services/audio_service.dart';
 import 'core/services/sample_data_service.dart';
 import 'core/services/user_role_service.dart';
+import 'core/services/imgur_service.dart';
+import 'data/repositories/reward_repository.dart';
+import 'data/repositories/analytics_repository.dart';
+import 'data/repositories/assessment_repository.dart';
+import 'data/repositories/schedule_repository.dart';
 import 'data/datasources/firebase_datasource.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/quiz_repository.dart';
@@ -17,6 +22,10 @@ import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/quiz/quiz_bloc.dart';
 import 'presentation/blocs/user/user_progress_bloc.dart';
 import 'presentation/blocs/user/user_bloc.dart';
+import 'presentation/blocs/reward/reward_bloc.dart';
+import 'presentation/blocs/analytics/analytics_bloc.dart';
+import 'presentation/blocs/assessment/assessment_bloc.dart';
+import 'presentation/blocs/schedule/schedule_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -40,6 +49,7 @@ void setupDependencies() {
   getIt.registerLazySingleton<StorageService>(() => StorageService());
   getIt.registerLazySingleton<AudioService>(() => AudioService());
   getIt.registerLazySingleton<UserRoleService>(() => UserRoleService());
+  getIt.registerLazySingleton<ImgurService>(() => ImgurService());
 
   // Data sources
   getIt.registerLazySingleton<FirebaseDataSource>(() => FirebaseDataSource());
@@ -55,6 +65,22 @@ void setupDependencies() {
       ));
 
   getIt.registerLazySingleton<UserRepository>(() => UserRepository(
+        firebaseDataSource: getIt<FirebaseDataSource>(),
+      ));
+
+  getIt.registerLazySingleton<RewardRepository>(() => RewardRepository(
+        firebaseDataSource: getIt<FirebaseDataSource>(),
+      ));
+
+  getIt.registerLazySingleton<AnalyticsRepository>(() => AnalyticsRepository(
+        firebaseDataSource: getIt<FirebaseDataSource>(),
+      ));
+
+  getIt.registerLazySingleton<AssessmentRepository>(() => AssessmentRepository(
+        firebaseDataSource: getIt<FirebaseDataSource>(),
+      ));
+
+  getIt.registerLazySingleton<ScheduleRepository>(() => ScheduleRepository(
         firebaseDataSource: getIt<FirebaseDataSource>(),
       ));
 
@@ -74,5 +100,21 @@ void setupDependencies() {
   getIt.registerFactory<UserBloc>(() => UserBloc(
         userRepository: getIt<UserRepository>(),
         quizRepository: getIt<QuizRepository>(),
+      ));
+
+  getIt.registerFactory<RewardBloc>(() => RewardBloc(
+        rewardRepository: getIt<RewardRepository>(),
+      ));
+
+  getIt.registerFactory<AnalyticsBloc>(() => AnalyticsBloc(
+        analyticsRepository: getIt<AnalyticsRepository>(),
+      ));
+
+  getIt.registerFactory<AssessmentBloc>(() => AssessmentBloc(
+        assessmentRepository: getIt<AssessmentRepository>(),
+      ));
+
+  getIt.registerFactory<ScheduleBloc>(() => ScheduleBloc(
+        scheduleRepository: getIt<ScheduleRepository>(),
       ));
 }

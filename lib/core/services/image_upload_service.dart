@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'imgur_service.dart';
 
 class ImageUploadService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
+  final ImgurService _imgurService = ImgurService();
 
   // Chọn ảnh từ thư viện hoặc camera
   Future<File?> pickImage({ImageSource source = ImageSource.gallery}) async {
@@ -36,44 +36,61 @@ class ImageUploadService {
 
 
 
-  // Tải ảnh lên Firebase Storage và trả về URL
+  // Tải ảnh lên Imgur và trả về URL
   Future<String?> uploadImage(File imageFile) async {
     try {
-      // Tạo tên file duy nhất bằng UUID
-      final String fileName = Uuid().v4();
+      // Sử dụng ImgurService để tải ảnh lên
+      final result = await _imgurService.uploadImage(imageFile);
 
-      // Tham chiếu đến vị trí lưu trữ trên Firebase Storage
-      final Reference ref = _storage.ref().child('question_images/$fileName.jpg');
-
-      // Tải ảnh lên
-      final UploadTask uploadTask = ref.putFile(imageFile);
-
-      // Đợi cho đến khi tải lên hoàn tất
-      final TaskSnapshot taskSnapshot = await uploadTask;
-
-      // Lấy URL tải xuống
-      final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-
-      return downloadUrl;
+      return result.fold(
+        (error) {
+          print('Error uploading image to Imgur: $error');
+          return null;
+        },
+        (url) => url,
+      );
     } catch (e) {
       print('Error uploading image: $e');
       return null;
     }
   }
 
-  // Xóa ảnh từ Firebase Storage
+  // Xóa ảnh - lưu ý: Imgur API miễn phí không hỗ trợ xóa ảnh
+  // Chúng ta có thể bỏ qua việc xóa vì Imgur sẽ tự động xóa các ảnh không được sử dụng sau một thời gian
   Future<bool> deleteImage(String imageUrl) async {
     try {
-      // Lấy tham chiếu từ URL
-      final Reference ref = _storage.refFromURL(imageUrl);
+      // Kiểm tra xem có phải là URL Imgur không
+      if (_imgurService.isImgurUrl(imageUrl)) {
+        // Không thể xóa ảnh từ Imgur với API miễn phí
+        print('Cannot delete image from Imgur with free API');
+        return true; // Trả về true để không gây lỗi cho người dùng
+      }
 
-      // Xóa ảnh
-      await ref.delete();
-
+      // Nếu không phải URL Imgur, có thể là URL khác
+      print('URL is not from Imgur, cannot delete: $imageUrl');
       return true;
     } catch (e) {
-      print('Error deleting image: $e');
+      print('Error handling image deletion: $e');
       return false;
+    }
+  }
+
+  // Tải ảnh lên Imgur từ URL và trả về URL mới
+  Future<String?> uploadImageFromUrl(String imageUrl) async {
+    try {
+      // Sử dụng ImgurService để tải ảnh lên từ URL
+      final result = await _imgurService.uploadImageFromUrl(imageUrl);
+
+      return result.fold(
+        (error) {
+          print('Error uploading image from URL to Imgur: $error');
+          return null;
+        },
+        (url) => url,
+      );
+    } catch (e) {
+      print('Error uploading image from URL: $e');
+      return null;
     }
   }
 }

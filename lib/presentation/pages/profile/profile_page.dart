@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../widgets/reward/currency_display.dart';
+import '../../blocs/reward/reward_bloc.dart';
 import '../../../main.dart';
+import '../../../app/routes.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
@@ -121,6 +124,17 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: Colors.white70,
                             ),
                           ),
+                          const SizedBox(height: 8),
+
+                          // Currency display
+                          BlocProvider<RewardBloc>(
+                            create: (context) => getIt<RewardBloc>(),
+                            child: CurrencyDisplay(
+                              userId: state.user.uid,
+                              isCompact: true,
+                            ),
+                          ),
+
                           const SizedBox(height: 8),
 
                           // User role text
@@ -342,14 +356,41 @@ class _ProfilePageState extends State<ProfilePage> {
                                         Navigator.of(context).pushNamed(AppRouter.manageQuizzes);
                                       },
                                     ),
+                                  if (role == AppConstants.roleTeacher)
+                                    _buildMenuCard(
+                                      icon: Icons.analytics,
+                                      title: 'Phân tích học sinh',
+                                      subtitle: 'Xem tiến độ và hiệu suất của học sinh',
+                                      onTap: () {
+                                        Navigator.of(context).pushNamed(AppRouter.teacherAnalytics);
+                                      },
+                                    ),
+                                  if (role == AppConstants.roleTeacher || role == AppConstants.roleParent)
+                                    _buildMenuCard(
+                                      icon: Icons.assessment,
+                                      title: 'Đánh giá kỹ năng',
+                                      subtitle: 'Tạo và quản lý đánh giá kỹ năng',
+                                      onTap: () {
+                                        Navigator.of(context).pushNamed(AppRouter.assessments);
+                                      },
+                                    ),
+                                  if (role == AppConstants.roleTeacher || role == AppConstants.roleParent)
+                                    _buildMenuCard(
+                                      icon: Icons.calendar_today,
+                                      title: 'Lịch học',
+                                      subtitle: 'Quản lý lịch học và nhắc nhở',
+                                      onTap: () {
+                                        Navigator.of(context).pushNamed(AppRouter.scheduleList);
+                                      },
+                                    ),
                                   if (role == AppConstants.roleTeacher || role == AppConstants.roleParent)
                                     const SizedBox(height: 12),
                                   _buildMenuCard(
                                     icon: Icons.emoji_events,
-                                    title: 'Thành tích của tôi',
+                                    title: 'Huy hiệu của tôi',
                                     subtitle: 'Xem các huy hiệu và thành tích',
                                     onTap: () {
-                                      Navigator.of(context).pushNamed(AppRouter.achievements);
+                                      Navigator.of(context).pushNamed(AppRouter.badges);
                                     },
                                   ),
                                   const SizedBox(height: 12),
@@ -367,15 +408,38 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 12),
                           _buildMenuCard(
-                            icon: Icons.settings,
-                            title: 'Cài đặt',
-                            subtitle: 'Thay đổi cài đặt ứng dụng',
+                            icon: Icons.shopping_cart,
+                            title: 'Cửa hàng phần thưởng',
+                            subtitle: 'Mua phần thưởng bằng xu',
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Tính năng đang phát triển'),
-                                ),
-                              );
+                              Navigator.of(context).pushNamed(AppRouter.rewardShop);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildMenuCard(
+                            icon: Icons.analytics,
+                            title: 'Phân tích học tập',
+                            subtitle: 'Xem tiến độ và hiệu suất học tập',
+                            onTap: () {
+                              Navigator.of(context).pushNamed(AppRouter.studentAnalytics);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildMenuCard(
+                            icon: Icons.assessment,
+                            title: 'Đánh giá kỹ năng',
+                            subtitle: 'Xem đánh giá kỹ năng của bạn',
+                            onTap: () {
+                              Navigator.of(context).pushNamed(AppRouter.assessments);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildMenuCard(
+                            icon: Icons.calendar_today,
+                            title: 'Lịch học',
+                            subtitle: 'Xem lịch học và nhắc nhở',
+                            onTap: () {
+                              Navigator.of(context).pushNamed(AppRouter.calendar);
                             },
                           ),
                           const SizedBox(height: 12),

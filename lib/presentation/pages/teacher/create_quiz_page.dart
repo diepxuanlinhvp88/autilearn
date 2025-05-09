@@ -207,6 +207,10 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                                 value: AppConstants.sequentialQuiz,
                                 child: const Text('Bài học sắp xếp'),
                               ),
+                              DropdownMenuItem(
+                                value: AppConstants.emotionsQuiz,
+                                child: const Text('Nhận diện cảm xúc'),
+                              ),
                             ],
                             onChanged: (value) {
                               setState(() {

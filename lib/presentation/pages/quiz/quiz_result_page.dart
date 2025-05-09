@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../presentation/widgets/common/confetti_animation.dart';
+import '../../../presentation/blocs/analytics/analytics_bloc.dart';
+import '../../../presentation/blocs/analytics/analytics_event.dart';
+import '../../../presentation/blocs/auth/auth_bloc.dart';
+import '../../../presentation/blocs/auth/auth_state.dart';
+import '../../../main.dart';
 
 class QuizResultPage extends StatefulWidget {
   final int score;
@@ -30,6 +36,22 @@ class _QuizResultPageState extends State<QuizResultPage> with SingleTickerProvid
       duration: const Duration(milliseconds: 1500),
     );
     _controller.forward();
+
+    // Cập nhật phân tích dữ liệu
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateAnalytics();
+    });
+  }
+
+  void _updateAnalytics() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final userId = authState.user.uid;
+
+      // Sử dụng AnalyticsBloc để cập nhật phân tích dữ liệu
+      final analyticsBloc = getIt<AnalyticsBloc>();
+      analyticsBloc.add(UpdateAnalyticsFromProgress(userId));
+    }
   }
 
   @override
@@ -159,6 +181,23 @@ class _QuizResultPageState extends State<QuizResultPage> with SingleTickerProvid
                   ),
                   child: const Text(
                     'Làm lại',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    final authState = context.read<AuthBloc>().state;
+                    if (authState is Authenticated) {
+                      Navigator.of(context).pushNamed('/analytics/student');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text(
+                    'Xem phân tích',
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

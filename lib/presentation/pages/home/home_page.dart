@@ -304,16 +304,104 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                     _buildQuizTypeCardNew(
-                      title: 'Bài học mới',
-                      icon: Icons.lightbulb,
+                      title: 'Nhận diện cảm xúc',
+                      icon: Icons.emoji_emotions,
                       color: Colors.purple,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Tính năng đang phát triển'),
-                          ),
-                        );
+                        // Truyền null để hiển thị tất cả bài học loại này
+                        Navigator.of(context).pushNamed(AppRouter.emotionsQuiz, arguments: null);
                       },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Phần thưởng và huy hiệu
+                Row(
+                  children: [
+                    Expanded(
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).pushNamed(AppRouter.badges);
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.emoji_events,
+                                    color: Colors.amber,
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Huy hiệu',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).pushNamed(AppRouter.rewardShop);
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.card_giftcard,
+                                    color: Colors.green,
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Cửa hàng',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -449,6 +537,118 @@ class _HomePageState extends State<HomePage> {
                                           const SizedBox(height: 4),
                                           Text(
                                             'Xem và chỉnh sửa bài học đã tạo',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).pushNamed(AppRouter.assessments);
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.purple.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.assessment,
+                                        color: Colors.purple,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Đánh giá kỹ năng',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Theo dõi sự phát triển của trẻ',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).pushNamed(AppRouter.calendar);
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.calendar_today,
+                                        color: Colors.green,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Lịch học',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Quản lý lịch học và nhắc nhở',
                                             style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.grey[600],
@@ -607,6 +807,10 @@ class _HomePageState extends State<HomePage> {
                       case AppConstants.sequentialQuiz:
                         icon = Icons.sort;
                         color = Colors.orange;
+                        break;
+                      case AppConstants.emotionsQuiz:
+                        icon = Icons.emoji_emotions;
+                        color = Colors.purple;
                         break;
                       default:
                         icon = Icons.quiz;
@@ -1007,6 +1211,9 @@ class _HomePageState extends State<HomePage> {
             case AppConstants.sequentialQuiz:
               Navigator.of(context).pushNamed(AppRouter.sequentialQuiz, arguments: quiz.id);
               break;
+            case AppConstants.emotionsQuiz:
+              Navigator.of(context).pushNamed(AppRouter.emotionsQuiz, arguments: quiz.id);
+              break;
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -1223,6 +1430,8 @@ class _HomePageState extends State<HomePage> {
         return 'Bài học ghép đôi';
       case AppConstants.sequentialQuiz:
         return 'Bài học sắp xếp';
+      case AppConstants.emotionsQuiz:
+        return 'Nhận diện cảm xúc';
       default:
         return 'Bài học';
     }

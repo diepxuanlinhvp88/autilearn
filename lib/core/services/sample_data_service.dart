@@ -2,6 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/quiz_model.dart';
 import '../../data/models/question_model.dart';
 import '../../data/models/user_progress_model.dart';
+import '../../data/models/badge_model.dart';
+import '../../data/models/reward_model.dart';
+import '../../data/models/currency_model.dart';
+import '../../data/models/analytics_model.dart';
+import '../../data/models/skill_assessment_model.dart';
+import '../../data/models/schedule_model.dart';
 import '../constants/app_constants.dart';
 
 class SampleDataService {
@@ -10,11 +16,150 @@ class SampleDataService {
   Future<void> generateSampleData(String userId) async {
     await _generateSampleQuizzes(userId);
     await _generateSampleProgress(userId);
+    await _generateSampleBadges(userId);
+    await _generateSampleRewards();
+    await _generateSampleCurrency(userId);
+    await _generateSampleAnalytics(userId);
+    await _generateSampleAssessments(userId);
+    await _generateSampleSchedules(userId);
   }
 
   Future<void> _generateSampleQuizzes(String userId) async {
     // Sample quizzes
     final List<Map<String, dynamic>> sampleQuizzes = [
+      {
+        'title': 'Nhận diện cảm xúc cơ bản',
+        'description': 'Học cách nhận biết các cảm xúc cơ bản của con người',
+        'type': AppConstants.emotionsQuiz,
+        'creatorId': userId,
+        'difficulty': AppConstants.difficultyEasy,
+        'tags': ['cảm xúc', 'nhận biết', 'kỹ năng xã hội'],
+        'isPublished': true,
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+        'questionCount': 4,
+        'category': 'Kỹ năng xã hội',
+        'ageRangeMin': 4,
+        'ageRangeMax': 8,
+        'questions': [
+          {
+            'text': 'Đâu là khuôn mặt vui vẻ?',
+            'type': AppConstants.emotionsQuiz,
+            'options': [
+              {
+                'id': 'A',
+                'text': 'Vui vẻ',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677490.png',
+              },
+              {
+                'id': 'B',
+                'text': 'Buồn bã',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677496.png',
+              },
+              {
+                'id': 'C',
+                'text': 'Tức giận',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677500.png',
+              },
+              {
+                'id': 'D',
+                'text': 'Sợ hãi',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677505.png',
+              },
+            ],
+            'correctOptionId': 'A',
+            'order': 1,
+            'hint': 'Khuôn mặt vui vẻ thường có nụ cười',
+          },
+          {
+            'text': 'Đâu là khuôn mặt buồn bã?',
+            'type': AppConstants.emotionsQuiz,
+            'options': [
+              {
+                'id': 'A',
+                'text': 'Vui vẻ',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677490.png',
+              },
+              {
+                'id': 'B',
+                'text': 'Buồn bã',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677496.png',
+              },
+              {
+                'id': 'C',
+                'text': 'Tức giận',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677500.png',
+              },
+              {
+                'id': 'D',
+                'text': 'Sợ hãi',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677505.png',
+              },
+            ],
+            'correctOptionId': 'B',
+            'order': 2,
+            'hint': 'Khuôn mặt buồn bã thường có miệng có hình cong xuống',
+          },
+          {
+            'text': 'Đâu là khuôn mặt tức giận?',
+            'type': AppConstants.emotionsQuiz,
+            'options': [
+              {
+                'id': 'A',
+                'text': 'Vui vẻ',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677490.png',
+              },
+              {
+                'id': 'B',
+                'text': 'Buồn bã',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677496.png',
+              },
+              {
+                'id': 'C',
+                'text': 'Tức giận',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677500.png',
+              },
+              {
+                'id': 'D',
+                'text': 'Sợ hãi',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677505.png',
+              },
+            ],
+            'correctOptionId': 'C',
+            'order': 3,
+            'hint': 'Khuôn mặt tức giận thường có lông mày nháu lại',
+          },
+          {
+            'text': 'Đâu là khuôn mặt sợ hãi?',
+            'type': AppConstants.emotionsQuiz,
+            'options': [
+              {
+                'id': 'A',
+                'text': 'Vui vẻ',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677490.png',
+              },
+              {
+                'id': 'B',
+                'text': 'Buồn bã',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677496.png',
+              },
+              {
+                'id': 'C',
+                'text': 'Tức giận',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677500.png',
+              },
+              {
+                'id': 'D',
+                'text': 'Sợ hãi',
+                'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4677/4677505.png',
+              },
+            ],
+            'correctOptionId': 'D',
+            'order': 4,
+            'hint': 'Khuôn mặt sợ hãi thường có mắt mở to',
+          },
+        ],
+      },
       {
         'title': 'Nhận biết động vật',
         'description': 'Học cách nhận biết các loài động vật khác nhau',
@@ -570,6 +715,453 @@ class SampleDataService {
     // Add progress to Firestore
     for (final progressData in sampleProgress) {
       await _firestore.collection('user_progress').add(progressData);
+    }
+  }
+
+  Future<void> _generateSampleBadges(String userId) async {
+    // Sample badges
+    final List<Map<String, dynamic>> sampleBadges = [
+      {
+        'name': 'Người mới bắt đầu',
+        'description': 'Hoàn thành bài học đầu tiên',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/2583/2583344.png',
+        'category': BadgeCategories.completion,
+        'requiredPoints': 10,
+        'isUnlocked': true,
+        'unlockedAt': Timestamp.now(),
+      },
+      {
+        'name': 'Học sinh chăm chỉ',
+        'description': 'Hoàn thành 5 bài học',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/2583/2583319.png',
+        'category': BadgeCategories.completion,
+        'requiredPoints': 50,
+        'isUnlocked': false,
+      },
+      {
+        'name': 'Siêu sao',
+        'description': 'Đạt điểm tuyệt đối trong một bài học',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/2583/2583434.png',
+        'category': BadgeCategories.mastery,
+        'requiredPoints': 100,
+        'isUnlocked': false,
+      },
+      {
+        'name': 'Học liên tục 3 ngày',
+        'description': 'Học tập 3 ngày liên tiếp',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/2583/2583383.png',
+        'category': BadgeCategories.streak,
+        'requiredPoints': 30,
+        'isUnlocked': false,
+      },
+      {
+        'name': 'Chuyên gia cảm xúc',
+        'description': 'Hoàn thành tất cả bài học về cảm xúc',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/2583/2583350.png',
+        'category': BadgeCategories.special,
+        'requiredPoints': 200,
+        'isUnlocked': false,
+      },
+    ];
+
+    // Add sample badges to Firestore
+    for (final badge in sampleBadges) {
+      await _firestore.collection('users').doc(userId).collection('badges').add(badge);
+    }
+  }
+
+  Future<void> _generateSampleRewards() async {
+    // Sample rewards
+    final List<Map<String, dynamic>> sampleRewards = [
+      {
+        'name': 'Hình nền Vũ trụ',
+        'description': 'Hình nền vũ trụ đầy sao',
+        'imageUrl': 'https://cdn.pixabay.com/photo/2016/10/20/18/35/earth-1756274_960_720.jpg',
+        'type': RewardTypes.background,
+        'cost': 100,
+      },
+      {
+        'name': 'Nhân vật Robot',
+        'description': 'Nhân vật robot thông minh',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/4616/4616934.png',
+        'type': RewardTypes.character,
+        'cost': 150,
+      },
+      {
+        'name': 'Huy hiệu Siêu nhân',
+        'description': 'Huy hiệu siêu nhân cho avatar',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/1674/1674291.png',
+        'type': RewardTypes.accessory,
+        'cost': 50,
+      },
+      {
+        'name': 'Chủ đề Đại dương',
+        'description': 'Chủ đề màu xanh đại dương',
+        'imageUrl': 'https://cdn.pixabay.com/photo/2016/11/23/13/48/beach-1852945_960_720.jpg',
+        'type': RewardTypes.theme,
+        'cost': 200,
+      },
+      {
+        'name': 'Avatar Khủng long',
+        'description': 'Avatar khủng long dễ thương',
+        'imageUrl': 'https://cdn-icons-png.flaticon.com/512/3196/3196017.png',
+        'type': RewardTypes.avatar,
+        'cost': 80,
+      },
+    ];
+
+    // Add sample rewards to Firestore
+    for (final reward in sampleRewards) {
+      await _firestore.collection('rewards').add(reward);
+    }
+  }
+
+  Future<void> _generateSampleCurrency(String userId) async {
+    // Sample currency
+    final Map<String, dynamic> sampleCurrency = {
+      'stars': 15,
+      'coins': 200,
+      'gems': 5,
+      'lastUpdated': Timestamp.now(),
+    };
+
+    // Add sample currency to Firestore
+    await _firestore.collection('users').doc(userId).collection('currency').doc('main').set(sampleCurrency);
+  }
+
+  Future<void> _generateSampleAnalytics(String userId) async {
+    // Sample analytics
+    final Map<String, dynamic> sampleAnalytics = {
+      'totalQuizzesTaken': 8,
+      'totalCorrectAnswers': 32,
+      'totalQuestions': 40,
+      'totalTimeSpentSeconds': 1200,
+      'totalStarsEarned': 15,
+      'quizTypeDistribution': {
+        'choices_quiz': 3,
+        'pairing_quiz': 2,
+        'sequential_quiz': 2,
+        'emotions_quiz': 1,
+      },
+      'performanceByQuizType': {
+        'choices_quiz': 0.85,
+        'pairing_quiz': 0.7,
+        'sequential_quiz': 0.8,
+        'emotions_quiz': 0.9,
+      },
+      'recentPerformance': [
+        {
+          'quizId': 'sample_quiz_1',
+          'quizTitle': 'Bài học lựa chọn cơ bản',
+          'quizType': 'choices_quiz',
+          'score': 8,
+          'totalQuestions': 10,
+          'timeSpentSeconds': 180,
+          'starsEarned': 2,
+          'completedAt': Timestamp.now(),
+        },
+        {
+          'quizId': 'sample_quiz_2',
+          'quizTitle': 'Bài học ghép đôi đơn giản',
+          'quizType': 'pairing_quiz',
+          'score': 5,
+          'totalQuestions': 5,
+          'timeSpentSeconds': 120,
+          'starsEarned': 3,
+          'completedAt': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 1))),
+        },
+        {
+          'quizId': 'sample_quiz_3',
+          'quizTitle': 'Bài học sắp xếp cơ bản',
+          'quizType': 'sequential_quiz',
+          'score': 4,
+          'totalQuestions': 5,
+          'timeSpentSeconds': 150,
+          'starsEarned': 2,
+          'completedAt': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 2))),
+        },
+        {
+          'quizId': 'sample_quiz_4',
+          'quizTitle': 'Nhận diện cảm xúc cơ bản',
+          'quizType': 'emotions_quiz',
+          'score': 4,
+          'totalQuestions': 4,
+          'timeSpentSeconds': 90,
+          'starsEarned': 3,
+          'completedAt': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 3))),
+        },
+      ],
+      'lastUpdated': Timestamp.now(),
+    };
+
+    // Add sample analytics to Firestore
+    await _firestore.collection('users').doc(userId).collection('analytics').doc('main').set(sampleAnalytics);
+
+    // Tạo dữ liệu mẫu cho học sinh (nếu là giáo viên)
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+      final userData = userDoc.data();
+      final role = userData?['role'];
+
+      if (role == 'teacher') {
+        // Tạo học sinh mẫu
+        final sampleStudentIds = [
+          'student1',
+          'student2',
+          'student3',
+        ];
+
+        for (final studentId in sampleStudentIds) {
+          // Tạo thông tin học sinh
+          await _firestore.collection('users').doc(studentId).set({
+            'name': 'Học sinh ${studentId.substring(7)}',
+            'email': '$studentId@example.com',
+            'role': 'student',
+            'createdAt': Timestamp.now(),
+            'updatedAt': Timestamp.now(),
+          });
+
+          // Tạo phân tích dữ liệu cho học sinh
+          final studentAnalytics = Map<String, dynamic>.from(sampleAnalytics);
+          studentAnalytics['totalQuizzesTaken'] = 5 + int.parse(studentId.substring(7));
+          studentAnalytics['totalCorrectAnswers'] = 20 + int.parse(studentId.substring(7)) * 2;
+          studentAnalytics['totalQuestions'] = 25 + int.parse(studentId.substring(7)) * 2;
+
+          await _firestore.collection('users').doc(studentId).collection('analytics').doc('main').set(studentAnalytics);
+        }
+      }
+    }
+  }
+
+  Future<void> _generateSampleAssessments(String userId) async {
+    // Kiểm tra vai trò người dùng
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    if (!userDoc.exists) return;
+
+    final userData = userDoc.data();
+    final role = userData?['role'];
+
+    if (role == 'teacher') {
+      // Lấy danh sách học sinh mẫu
+      final sampleStudentIds = [
+        'student1',
+        'student2',
+        'student3',
+      ];
+
+      for (final studentId in sampleStudentIds) {
+        // Tạo đánh giá mẫu
+        final skillCategories = DefaultSkillCategories.getDefaultCategories();
+
+        // Cập nhật một số kỹ năng để tạo dữ liệu đa dạng
+        final updatedSkillCategories = Map<String, SkillCategory>.from(skillCategories);
+
+        // Cập nhật kỹ năng giao tiếp
+        final communicationSkills = Map<String, Skill>.from(updatedSkillCategories['communication']!.skills);
+        communicationSkills['verbal'] = communicationSkills['verbal']!.copyWith(level: 3);
+        communicationSkills['nonverbal'] = communicationSkills['nonverbal']!.copyWith(level: 2);
+        updatedSkillCategories['communication'] = updatedSkillCategories['communication']!.copyWith(
+          skills: communicationSkills,
+        );
+
+        // Cập nhật kỹ năng xã hội
+        final socialSkills = Map<String, Skill>.from(updatedSkillCategories['social']!.skills);
+        socialSkills['turntaking'] = socialSkills['turntaking']!.copyWith(level: 2);
+        socialSkills['sharing'] = socialSkills['sharing']!.copyWith(level: 3);
+        updatedSkillCategories['social'] = updatedSkillCategories['social']!.copyWith(
+          skills: socialSkills,
+        );
+
+        // Tạo đánh giá
+        final assessment = {
+          'studentId': studentId,
+          'teacherId': userId,
+          'skillCategories': updatedSkillCategories.map((key, category) {
+            return MapEntry(key, {
+              'name': category.name,
+              'skills': category.skills.map((skillKey, skill) {
+                return MapEntry(skillKey, {
+                  'name': skill.name,
+                  'description': skill.description,
+                  'level': skill.level,
+                  'notes': skill.notes,
+                });
+              }),
+            });
+          }),
+          'notes': 'Học sinh có tiến bộ trong giao tiếp và kỹ năng xã hội.',
+          'assessmentDate': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 7))),
+          'createdAt': Timestamp.now(),
+          'updatedAt': Timestamp.now(),
+        };
+
+        await _firestore.collection('skill_assessments').add(assessment);
+      }
+    } else if (role == 'student') {
+      // Tạo đánh giá mẫu cho học sinh
+      final skillCategories = DefaultSkillCategories.getDefaultCategories();
+
+      // Cập nhật một số kỹ năng để tạo dữ liệu đa dạng
+      final updatedSkillCategories = Map<String, SkillCategory>.from(skillCategories);
+
+      // Cập nhật kỹ năng giao tiếp
+      final communicationSkills = Map<String, Skill>.from(updatedSkillCategories['communication']!.skills);
+      communicationSkills['verbal'] = communicationSkills['verbal']!.copyWith(level: 2);
+      updatedSkillCategories['communication'] = updatedSkillCategories['communication']!.copyWith(
+        skills: communicationSkills,
+      );
+
+      // Tạo đánh giá
+      final assessment = {
+        'studentId': userId,
+        'teacherId': 'teacher1',
+        'skillCategories': updatedSkillCategories.map((key, category) {
+          return MapEntry(key, {
+            'name': category.name,
+            'skills': category.skills.map((skillKey, skill) {
+              return MapEntry(skillKey, {
+                'name': skill.name,
+                'description': skill.description,
+                'level': skill.level,
+                'notes': skill.notes,
+              });
+            }),
+          });
+        }),
+        'notes': 'Học sinh cần cải thiện kỹ năng giao tiếp.',
+        'assessmentDate': Timestamp.fromDate(DateTime.now().subtract(const Duration(days: 14))),
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      };
+
+      await _firestore.collection('skill_assessments').add(assessment);
+    }
+  }
+
+  Future<void> _generateSampleSchedules(String userId) async {
+    // Kiểm tra vai trò người dùng
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    if (!userDoc.exists) return;
+
+    final userData = userDoc.data();
+    final role = userData?['role'];
+
+    // Tạo lịch học mẫu
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final sampleSchedules = [
+      // Lịch học hôm nay
+      {
+        'userId': userId,
+        'title': 'Bài học giao tiếp cơ bản',
+        'description': 'Tập trung vào kỹ năng giao tiếp bằng lời',
+        'startTime': Timestamp.fromDate(today.add(const Duration(hours: 9))),
+        'endTime': Timestamp.fromDate(today.add(const Duration(hours: 10))),
+        'isRecurring': true,
+        'recurrenceType': 'weekly',
+        'recurrenceDays': [1, 3, 5], // Thứ 2, 4, 6
+        'hasReminder': true,
+        'reminderMinutesBefore': 30,
+        'type': 'lesson',
+        'relatedId': '',
+        'isCompleted': false,
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      },
+      // Lịch học ngày mai
+      {
+        'userId': userId,
+        'title': 'Trị liệu ngôn ngữ',
+        'description': 'Phát triển kỹ năng ngôn ngữ và giao tiếp',
+        'startTime': Timestamp.fromDate(today.add(const Duration(days: 1, hours: 14))),
+        'endTime': Timestamp.fromDate(today.add(const Duration(days: 1, hours: 15))),
+        'isRecurring': false,
+        'recurrenceType': 'daily',
+        'recurrenceDays': [],
+        'hasReminder': true,
+        'reminderMinutesBefore': 60,
+        'type': 'therapy',
+        'relatedId': '',
+        'isCompleted': false,
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      },
+      // Đánh giá tuần sau
+      {
+        'userId': userId,
+        'title': 'Đánh giá kỹ năng định kỳ',
+        'description': 'Đánh giá tiến bộ và phát triển kỹ năng',
+        'startTime': Timestamp.fromDate(today.add(const Duration(days: 7, hours: 10))),
+        'endTime': Timestamp.fromDate(today.add(const Duration(days: 7, hours: 11))),
+        'isRecurring': false,
+        'recurrenceType': 'daily',
+        'recurrenceDays': [],
+        'hasReminder': true,
+        'reminderMinutesBefore': 120,
+        'type': 'assessment',
+        'relatedId': '',
+        'isCompleted': false,
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      },
+    ];
+
+    // Thêm lịch học đã hoàn thành
+    final completedSchedule = {
+      'userId': userId,
+      'title': 'Bài học về cảm xúc',
+      'description': 'Nhận biết và biểu đạt cảm xúc',
+      'startTime': Timestamp.fromDate(today.subtract(const Duration(days: 1, hours: 9))),
+      'endTime': Timestamp.fromDate(today.subtract(const Duration(days: 1, hours: 8))),
+      'isRecurring': false,
+      'recurrenceType': 'daily',
+      'recurrenceDays': [],
+      'hasReminder': false,
+      'reminderMinutesBefore': 30,
+      'type': 'lesson',
+      'relatedId': '',
+      'isCompleted': true,
+      'createdAt': Timestamp.now(),
+      'updatedAt': Timestamp.now(),
+    };
+
+    sampleSchedules.add(completedSchedule);
+
+    // Nếu là giáo viên, thêm lịch học cho học sinh
+    if (role == 'teacher') {
+      final sampleStudentIds = [
+        'student1',
+        'student2',
+        'student3',
+      ];
+
+      for (final studentId in sampleStudentIds) {
+        final studentSchedule = {
+          'userId': studentId,
+          'title': 'Buổi học cá nhân',
+          'description': 'Buổi học riêng với giáo viên',
+          'startTime': Timestamp.fromDate(today.add(const Duration(days: 2, hours: 10))),
+          'endTime': Timestamp.fromDate(today.add(const Duration(days: 2, hours: 11))),
+          'isRecurring': false,
+          'recurrenceType': 'daily',
+          'recurrenceDays': [],
+          'hasReminder': true,
+          'reminderMinutesBefore': 30,
+          'type': 'lesson',
+          'relatedId': '',
+          'isCompleted': false,
+          'createdAt': Timestamp.now(),
+          'updatedAt': Timestamp.now(),
+        };
+
+        await _firestore.collection('schedules').add(studentSchedule);
+      }
+    }
+
+    // Thêm lịch học mẫu vào Firestore
+    for (final schedule in sampleSchedules) {
+      await _firestore.collection('schedules').add(schedule);
     }
   }
 }
