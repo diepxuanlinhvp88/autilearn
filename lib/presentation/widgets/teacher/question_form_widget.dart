@@ -7,12 +7,14 @@ class QuestionFormWidget extends StatefulWidget {
   final String quizType;
   final QuestionModel? initialQuestion;
   final Function(QuestionModel) onSave;
+  final Function(QuestionModel)? onPreview; // Callback để cập nhật xem trước
 
   const QuestionFormWidget({
     super.key,
     required this.quizType,
     this.initialQuestion,
     required this.onSave,
+    this.onPreview,
   });
 
   @override
@@ -89,6 +91,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         imageUrl: null,
       ));
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _removeOption(int index) {
@@ -107,6 +110,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         _correctSequence.remove(removedOption.id);
       }
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _addPairingOption(bool isLeft) {
@@ -127,6 +131,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         ));
       }
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _removePairingOption(int index, bool isLeft) {
@@ -145,18 +150,21 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         _correctPairs.removeWhere((key, value) => value == removedOption.id);
       }
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _updateOptionText(int index, String text) {
     setState(() {
       _options[index] = _options[index].copyWith(text: text);
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _updateOptionImageUrl(int index, String? imageUrl) {
     setState(() {
       _options[index] = _options[index].copyWith(imageUrl: imageUrl);
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _updatePairingOptionText(int index, String text, bool isLeft) {
@@ -167,6 +175,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         _rightOptions[index] = _rightOptions[index].copyWith(text: text);
       }
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _updatePairingOptionImageUrl(int index, String? imageUrl, bool isLeft) {
@@ -177,24 +186,18 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         _rightOptions[index] = _rightOptions[index].copyWith(imageUrl: imageUrl);
       }
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
   void _updateCorrectPair(String leftId, String rightId) {
     setState(() {
       _correctPairs[leftId] = rightId;
     });
+    _updatePreview(); // Cập nhật xem trước
   }
 
-  void _saveQuestion() {
-    if (!_formKey.currentState!.validate()) {
-      print('Form validation failed');
-      return;
-    }
-
-    print('Saving question...');
-    print('Initial question ID: ${widget.initialQuestion?.id}');
-    print('Quiz type: ${widget.quizType}');
-
+  // Tạo đối tượng QuestionModel từ trạng thái hiện tại
+  QuestionModel _createQuestionModel() {
     QuestionModel question;
 
     if (widget.quizType == AppConstants.choicesQuiz) {
@@ -210,7 +213,6 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
-      print('Choices quiz - Options count: ${_options.length}, Correct option ID: $_correctOptionId');
     } else if (widget.quizType == AppConstants.sequentialQuiz) {
       question = QuestionModel(
         id: widget.initialQuestion?.id ?? '',
@@ -224,7 +226,6 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
-      print('Sequential quiz - Options count: ${_options.length}, Sequence length: ${_correctSequence.length}');
     } else {
       // Combine left and right options for pairing quiz
       final allOptions = [..._leftOptions, ..._rightOptions];
@@ -241,6 +242,36 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
         order: widget.initialQuestion?.order ?? 1,
         hint: _hintController.text.isEmpty ? null : _hintController.text,
       );
+    }
+
+    return question;
+  }
+
+  // Cập nhật xem trước
+  void _updatePreview() {
+    if (widget.onPreview != null) {
+      final question = _createQuestionModel();
+      widget.onPreview!(question);
+    }
+  }
+
+  void _saveQuestion() {
+    if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
+      return;
+    }
+
+    print('Saving question...');
+    print('Initial question ID: ${widget.initialQuestion?.id}');
+    print('Quiz type: ${widget.quizType}');
+
+    final question = _createQuestionModel();
+
+    if (widget.quizType == AppConstants.choicesQuiz) {
+      print('Choices quiz - Options count: ${_options.length}, Correct option ID: $_correctOptionId');
+    } else if (widget.quizType == AppConstants.sequentialQuiz) {
+      print('Sequential quiz - Options count: ${_options.length}, Sequence length: ${_correctSequence.length}');
+    } else {
       print('Pairing quiz - Left options: ${_leftOptions.length}, Right options: ${_rightOptions.length}, Pairs: ${_correctPairs.length}');
     }
 
@@ -274,6 +305,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
               return null;
             },
             maxLines: 2,
+            onChanged: (_) => _updatePreview(), // Cập nhật xem trước khi thay đổi nội dung
           ),
           const SizedBox(height: 16),
 
@@ -286,6 +318,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
               prefixIcon: Icon(Icons.lightbulb_outline),
             ),
             maxLines: 2,
+            onChanged: (_) => _updatePreview(), // Cập nhật xem trước khi thay đổi nội dung
           ),
           const SizedBox(height: 16),
 
@@ -301,11 +334,13 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
               setState(() {
                 _imageUrl = url;
               });
+              _updatePreview(); // Cập nhật xem trước khi thay đổi hình ảnh
             },
             onImageRemoved: () {
               setState(() {
                 _imageUrl = null;
               });
+              _updatePreview(); // Cập nhật xem trước khi xóa hình ảnh
             },
           ),
           const SizedBox(height: 16),
@@ -318,6 +353,7 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.music_note),
             ),
+            onChanged: (_) => _updatePreview(), // Cập nhật xem trước khi thay đổi nội dung
           ),
           const SizedBox(height: 24),
 
@@ -331,21 +367,42 @@ class _QuestionFormWidgetState extends State<QuestionFormWidget> {
 
           const SizedBox(height: 24),
 
-          // Save button
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: _saveQuestion,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
+          // Preview and Save buttons
+          Row(
+            children: [
+              // Preview button
+              Expanded(
+                child: SizedBox(
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: _updatePreview,
+                    icon: const Icon(Icons.preview),
+                    label: const Text('Xem trước'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                    ),
+                  ),
+                ),
               ),
-              child: const Text(
-                'Lưu câu hỏi',
-                style: TextStyle(fontSize: 16),
+              const SizedBox(width: 16),
+              // Save button
+              Expanded(
+                child: SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _saveQuestion,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text(
+                      'Lưu câu hỏi',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

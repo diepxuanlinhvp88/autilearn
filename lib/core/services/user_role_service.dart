@@ -24,13 +24,13 @@ class UserRoleService {
         final userData = {
           'name': user.displayName ?? 'Người dùng',
           'email': user.email ?? '',
-          'role': AppConstants.roleTeacher, // Mặc định là giáo viên
+          'role': AppConstants.roleStudent, // Mặc định là học sinh
           'createdAt': Timestamp.now(),
           'updatedAt': Timestamp.now(),
         };
 
         await _firestore.collection('users').doc(user.uid).set(userData);
-        return AppConstants.roleTeacher;
+        return AppConstants.roleStudent;
       }
 
       // Nếu người dùng đã tồn tại nhưng không có vai trò, cập nhật
@@ -38,10 +38,10 @@ class UserRoleService {
       if (!data.containsKey('role') || data['role'] == null || data['role'] == '') {
         print('Cập nhật vai trò cho người dùng');
         await _firestore.collection('users').doc(user.uid).update({
-          'role': AppConstants.roleTeacher,
+          'role': AppConstants.roleStudent,
           'updatedAt': Timestamp.now(),
         });
-        return AppConstants.roleTeacher;
+        return AppConstants.roleStudent;
       }
 
       return data['role'] as String;

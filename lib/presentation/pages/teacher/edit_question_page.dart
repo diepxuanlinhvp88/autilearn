@@ -89,6 +89,18 @@ class _EditQuestionPageState extends State<EditQuestionPage> {
                       print('EditQuestionPage: Dispatching UpdateQuestion event');
                       context.read<QuizBloc>().add(UpdateQuestion(updatedQuestion));
                     },
+                    onPreview: (question) {
+                      // Preserve ID and order
+                      final updatedQuestion = question.copyWith(
+                        id: widget.question.id,
+                        quizId: widget.question.quizId,
+                        order: widget.question.order,
+                      );
+
+                      setState(() {
+                        _previewQuestion = updatedQuestion;
+                      });
+                    },
                   ),
 
                   const SizedBox(height: 24),

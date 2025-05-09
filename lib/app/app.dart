@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../firebase_options.dart';
 import '../core/services/auth_service.dart';
 import '../presentation/blocs/auth/auth_bloc.dart';
+import '../main.dart';
+import '../presentation/blocs/auth/auth_event.dart';
 import 'routes.dart';
 
 class AutiLearnApp extends StatelessWidget {
@@ -11,13 +13,18 @@ class AutiLearnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(authService: AuthService()),
-        ),
-      ],
-      child: MaterialApp(
+    return BlocProvider<AuthBloc>(
+      create: (context) {
+        print('AutiLearnApp: Creating AuthBloc');
+        final authBloc = getIt<AuthBloc>();
+        // Khởi tạo trạng thái ban đầu
+        authBloc.add(const AuthCheckRequested());
+        return authBloc;
+      },
+      child: Builder(
+        builder: (context) {
+          print('AutiLearnApp: AuthBloc state: ${context.watch<AuthBloc>().state}');
+          return MaterialApp(
         title: 'AutiLearn',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
@@ -74,6 +81,8 @@ class AutiLearnApp extends StatelessWidget {
         onGenerateRoute: AppRouter.onGenerateRoute,
         initialRoute: AppRouter.splash,
         debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

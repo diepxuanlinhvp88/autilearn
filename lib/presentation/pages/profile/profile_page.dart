@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../main.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_event.dart';
@@ -22,11 +23,21 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthBloc>(
-      create: (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
+        ),
+        BlocProvider<UserBloc>(
+          create: (context) => getIt<UserBloc>(),
+        ),
+      ],
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is Authenticated) {
+            // Luôn tải lại thông tin người dùng để đảm bảo có thông tin mới nhất
+            print('ProfilePage: Loading user profile for user: ${state.user.uid}');
+            context.read<UserBloc>().add(LoadUserProfile(state.user.uid));
             return Scaffold(
               appBar: AppBar(
                 title: const Text('Hồ sơ của tôi'),
@@ -75,13 +86,31 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           const SizedBox(height: 16),
                           // User name
-                          Text(
-                            state.user.displayName ?? 'Người dùng',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                          FutureBuilder<String>(
+                            future: _getUserName(state.user.uid),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Text(
+                                  'Đang tải...',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              }
+
+                              final displayName = snapshot.data ?? state.user.displayName ?? 'Người dùng';
+                              print('ProfilePage: User name from Firestore: $displayName');
+                              return Text(
+                                displayName,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 4),
                           // User email
@@ -529,22 +558,71 @@ class _ProfilePageState extends State<ProfilePage> {
   // Phương thức lấy vai trò người dùng trực tiếp từ Firestore
   Future<String> _getUserRole(String userId) async {
     try {
-      print('Getting user role for userId: $userId');
+      print('ProfilePage: Getting user role for userId: $userId');
       final firestore = FirebaseFirestore.instance;
       final doc = await firestore.collection('users').doc(userId).get();
 
       if (!doc.exists) {
-        print('User document does not exist');
+        print('ProfilePage: User document does not exist');
+        // Tạo mới người dùng trong Firestore nếu chưa tồn tại
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await firestore.collection('users').doc(userId).set({
+            'name': user.displayName ?? 'Người dùng',
+            'email': user.email ?? '',
+            'role': AppConstants.roleStudent,
+            'createdAt': Timestamp.now(),
+            'updatedAt': Timestamp.now(),
+          });
+          print('ProfilePage: Created new user document with role: ${AppConstants.roleStudent}');
+          return AppConstants.roleStudent;
+        }
         return AppConstants.roleStudent;
       }
 
       final data = doc.data() as Map<String, dynamic>?;
       final role = data?['role'] as String? ?? AppConstants.roleStudent;
-      print('User role from Firestore: $role');
+      print('ProfilePage: User role from Firestore: $role');
       return role;
     } catch (e) {
-      print('Error getting user role: $e');
+      print('ProfilePage: Error getting user role: $e');
       return AppConstants.roleStudent;
+    }
+  }
+
+  // Phương thức lấy tên người dùng trực tiếp từ Firestore
+  Future<String> _getUserName(String userId) async {
+    try {
+      print('ProfilePage: Getting user name for userId: $userId');
+      final firestore = FirebaseFirestore.instance;
+      final doc = await firestore.collection('users').doc(userId).get();
+
+      if (!doc.exists) {
+        print('ProfilePage: User document does not exist');
+        // Tạo mới người dùng trong Firestore nếu chưa tồn tại
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final displayName = user.displayName ?? 'Người dùng';
+          await firestore.collection('users').doc(userId).set({
+            'name': displayName,
+            'email': user.email ?? '',
+            'role': AppConstants.roleStudent,
+            'createdAt': Timestamp.now(),
+            'updatedAt': Timestamp.now(),
+          });
+          print('ProfilePage: Created new user document with name: $displayName');
+          return displayName;
+        }
+        return '';
+      }
+
+      final data = doc.data() as Map<String, dynamic>?;
+      final name = data?['name'] as String? ?? '';
+      print('ProfilePage: User name from Firestore: $name');
+      return name;
+    } catch (e) {
+      print('ProfilePage: Error getting user name: $e');
+      return '';
     }
   }
 

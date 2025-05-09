@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/models/quiz_model.dart';
 import '../../../main.dart';
@@ -8,6 +9,7 @@ import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../presentation/blocs/quiz/quiz_bloc.dart';
 import '../../../presentation/blocs/quiz/quiz_event.dart';
 import '../../../presentation/blocs/quiz/quiz_state.dart';
+import '../../../app/routes.dart';
 
 class EditQuizPage extends StatefulWidget {
   final QuizModel quiz;
@@ -22,6 +24,22 @@ class EditQuizPage extends StatefulWidget {
 }
 
 class _EditQuizPageState extends State<EditQuizPage> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Lấy vai trò người dùng từ Firestore
+  Future<String> _getUserRole(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        return userData['role'] ?? '';
+      }
+      return '';
+    } catch (e) {
+      print('Error getting user role: $e');
+      return '';
+    }
+  }
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
@@ -59,38 +77,57 @@ class _EditQuizPageState extends State<EditQuizPage> {
   Widget build(BuildContext context) {
     return BlocProvider<QuizBloc>(
       create: (context) => getIt<QuizBloc>(),
-      child: BlocConsumer<QuizBloc, QuizState>(
-        listener: (context, state) {
-          if (state is QuizOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.of(context).pop(true); // Return true to indicate success
-          } else if (state is QuizError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Chỉnh sửa bài học'),
-              actions: [
-                if (state is! QuizLoading)
-                  IconButton(
-                    icon: const Icon(Icons.save),
-                    onPressed: _saveQuiz,
-                    tooltip: 'Lưu bài học',
-                  ),
-              ],
-            ),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          if (authState is Authenticated) {
+            // Kiểm tra vai trò người dùng
+            return FutureBuilder<String>(
+              future: _getUserRole(authState.user.uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final userRole = snapshot.data ?? '';
+
+                // Chỉ cho phép giáo viên và phụ huynh truy cập
+                if (userRole == AppConstants.roleTeacher || userRole == AppConstants.roleParent) {
+                  return BlocConsumer<QuizBloc, QuizState>(
+                    listener: (context, state) {
+                      if (state is QuizOperationSuccess) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        Navigator.of(context).pop(true); // Return true to indicate success
+                      } else if (state is QuizError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      return Scaffold(
+                        appBar: AppBar(
+                          title: const Text('Chỉnh sửa bài học'),
+                          actions: [
+                            if (state is! QuizLoading)
+                              IconButton(
+                                icon: const Icon(Icons.save),
+                                onPressed: _saveQuiz,
+                                tooltip: 'Lưu bài học',
+                              ),
+                          ],
+                        ),
             body: state is QuizLoading
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
@@ -348,6 +385,63 @@ class _EditQuizPageState extends State<EditQuizPage> {
                       ),
                     ),
                   ),
+                      );
+                    },
+                  );
+                }
+
+                // Nếu là học sinh, hiển thị thông báo không có quyền truy cập
+                return Scaffold(
+                  appBar: AppBar(
+                    title: const Text('Chỉnh sửa bài học'),
+                  ),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.lock,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Bạn không có quyền truy cập',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Chỉ giáo viên và phụ huynh mới có thể chỉnh sửa bài học',
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          } else if (authState is Unauthenticated) {
+            // Redirect to login page
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).pushReplacementNamed(AppRouter.login);
+            });
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          // Show loading indicator while checking auth state
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
           );
         },
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/quiz_model.dart';
+import '../presentation/blocs/auth/auth_bloc.dart';
 import '../presentation/pages/auth/login_page.dart';
 import '../presentation/pages/auth/register_page.dart';
 import '../presentation/pages/home/home_page.dart';
@@ -55,7 +57,13 @@ class AppRouter {
         final quizId = settings.arguments as String?;
         return MaterialPageRoute(builder: (_) => SequentialQuizPage(quizId: quizId));
       case createQuiz:
-        return MaterialPageRoute(builder: (_) => const CreateQuizPage());
+        return MaterialPageRoute(
+          builder: (context) {
+            print('AppRouter: Creating CreateQuizPage route');
+            print('AppRouter: AuthBloc state: ${BlocProvider.of<AuthBloc>(context).state}');
+            return const CreateQuizPage();
+          },
+        );
       case editQuiz:
         final quiz = settings.arguments as QuizModel;
         return MaterialPageRoute(builder: (_) => EditQuizPage(quiz: quiz));

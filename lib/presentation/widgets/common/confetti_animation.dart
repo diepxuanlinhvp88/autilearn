@@ -29,6 +29,13 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> with SingleTicker
 
     _confetti = List.generate(_confettiCount, (_) => Confetti(_random));
     _controller.forward();
+
+    // Dừng hiệu ứng sau 3 giây để tránh tốn tài nguyên
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _controller.stop();
+      }
+    });
   }
 
   @override
@@ -41,18 +48,22 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> with SingleTicker
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // Đặt widget.child ở trên cùng để đảm bảo nó nhận được các sự kiện nhấn
         widget.child,
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return CustomPaint(
-              painter: ConfettiPainter(
-                _confetti,
-                _controller.value,
-              ),
-              child: Container(),
-            );
-          },
+        // Sử dụng IgnorePointer để đảm bảo hiệu ứng pháo hoa không chặn các sự kiện nhấn
+        IgnorePointer(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: ConfettiPainter(
+                  _confetti,
+                  _controller.value,
+                ),
+                child: Container(),
+              );
+            },
+          ),
         ),
       ],
     );
@@ -114,15 +125,15 @@ class ConfettiPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (var confetti in this.confetti) {
       confetti.update(animationValue);
-      
+
       final paint = Paint()
         ..color = confetti.color
         ..style = PaintingStyle.fill;
-      
+
       canvas.save();
       canvas.translate(confetti.x * size.width, confetti.y * size.height);
       canvas.rotate(confetti.angle);
-      
+
       // Draw a rectangle for confetti
       canvas.drawRect(
         Rect.fromCenter(
@@ -132,7 +143,7 @@ class ConfettiPainter extends CustomPainter {
         ),
         paint,
       );
-      
+
       canvas.restore();
     }
   }

@@ -20,11 +20,8 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     LoadUserProfile event,
     Emitter<UserState> emit,
   ) async {
-    // Kiểm tra xem đã có dữ liệu người dùng chưa
-    if (state is UserProfileLoaded) {
-      print('User profile already loaded, skipping fetch');
-      return;
-    }
+    // Luôn tải lại thông tin người dùng để đảm bảo có thông tin mới nhất
+    print('UserBloc: Loading user profile for userId: ${event.userId}');
 
     print('Loading user profile for userId: ${event.userId}');
     emit(const UserLoading());

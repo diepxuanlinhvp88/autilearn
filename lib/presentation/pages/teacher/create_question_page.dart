@@ -69,18 +69,29 @@ class _CreateQuestionPageState extends State<CreateQuestionPage> {
                         quizId: widget.quizId,
                         order: widget.order,
                       );
-                      
+
                       setState(() {
                         _previewQuestion = updatedQuestion;
                       });
-                      
+
                       // Create question
                       context.read<QuizBloc>().add(CreateQuestion(updatedQuestion));
                     },
+                    onPreview: (question) {
+                      // Update preview with quiz ID and order
+                      final updatedQuestion = question.copyWith(
+                        quizId: widget.quizId,
+                        order: widget.order,
+                      );
+
+                      setState(() {
+                        _previewQuestion = updatedQuestion;
+                      });
+                    },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Preview
                   if (_previewQuestion != null)
                     QuestionPreviewWidget(question: _previewQuestion!),

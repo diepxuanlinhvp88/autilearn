@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/models/question_model.dart';
+import '../../../data/models/user_progress_model.dart';
 import '../../../main.dart';
 import '../../../presentation/blocs/quiz/quiz_bloc.dart';
 import '../../../presentation/blocs/quiz/quiz_event.dart';
 import '../../../presentation/blocs/quiz/quiz_state.dart';
+import '../../../presentation/blocs/user/user_progress_bloc.dart';
+import '../../../presentation/blocs/user/user_progress_event.dart';
+import '../../../presentation/blocs/user/user_progress_state.dart';
+import '../../../presentation/blocs/auth/auth_bloc.dart';
+import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../presentation/widgets/quiz/quiz_option_card.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../presentation/widgets/common/confetti_animation.dart';
+import '../quiz/quiz_result_page.dart';
 
 class ChoicesQuizPage extends StatefulWidget {
   final String? quizId;
@@ -46,8 +53,25 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
             return bloc;
           },
         ),
+        BlocProvider<UserProgressBloc>(
+          create: (context) => getIt<UserProgressBloc>(),
+        ),
       ],
-      child: Scaffold(
+      child: BlocListener<UserProgressBloc, UserProgressState>(
+        listener: (context, state) {
+          if (state is UserProgressSaved) {
+            print('ChoicesQuizPage: User progress saved successfully with ID: ${state.progressId}');
+          } else if (state is UserProgressError) {
+            print('ChoicesQuizPage: Error saving user progress: ${state.message}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lỗi khi lưu tiến trình: ${state.message}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        child: Scaffold(
         appBar: AppBar(
           title: const Text('Bài học lựa chọn'),
           backgroundColor: Colors.blue,
@@ -331,115 +355,79 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
           },
         ),
       ),
-    );
+    ));
   }
 
   void _showCompletionDialog() {
     // Play success sound
-    _audioService.playSuccessSound();
+    try {
+      _audioService.playSuccessSound();
+      print('ChoicesQuizPage: Success sound played');
+    } catch (e) {
+      print('ChoicesQuizPage: Error playing success sound: $e');
+    }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ConfettiAnimation(
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Hoàn thành bài học!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Trophy animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: value,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.emoji_events,
-                    color: Colors.amber,
-                    size: 64,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Score animation
-              TweenAnimationBuilder<int>(
-                tween: IntTween(begin: 0, end: _score),
-                duration: const Duration(milliseconds: 1500),
-                builder: (context, value, child) {
-                  return Text(
-                    'Điểm của bạn: $value/$_totalQuestions',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              // Percentage animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0, end: _score / _totalQuestions),
-                duration: const Duration(milliseconds: 1500),
-                builder: (context, value, child) {
-                  return Column(
-                    children: [
-                      Text(
-                        'Tỷ lệ đúng: ${(value * 100).toStringAsFixed(0)}%',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: value,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(value)),
-                          minHeight: 10,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        actions: [
-          TextButton(
-            onPressed: () {
+    // In ra thông báo để gỡ lỗi
+    print('ChoicesQuizPage: Showing completion dialog');
+    print('ChoicesQuizPage: Score: $_score/$_totalQuestions');
+
+    // Lưu tiến trình người dùng vào Firebase
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      final userId = authState.user.uid;
+      final quizId = widget.quizId;
+
+      if (quizId != null) {
+        // Tạo danh sách các lần thử câu hỏi
+        final attempts = <QuestionAttempt>[];
+
+        // Tính số sao dựa trên điểm số
+        final percentage = _score / _totalQuestions;
+        int starsEarned = 0;
+        if (percentage >= 0.8) {
+          starsEarned = 3;
+        } else if (percentage >= 0.6) {
+          starsEarned = 2;
+        } else if (percentage >= 0.4) {
+          starsEarned = 1;
+        }
+
+        // Tạo mô hình tiến trình
+        final progress = UserProgressModel(
+          id: '', // ID sẽ được tạo bởi Firebase
+          userId: userId,
+          quizId: quizId,
+          score: _score,
+          totalQuestions: _totalQuestions,
+          attempts: attempts,
+          completedAt: DateTime.now(),
+          timeSpentSeconds: 0, // Có thể thêm tính năng đo thời gian sau
+          starsEarned: starsEarned,
+        );
+
+        // Lưu tiến trình vào Firebase
+        try {
+          context.read<UserProgressBloc>().add(SaveUserProgress(progress));
+          print('ChoicesQuizPage: Saving user progress to Firebase');
+        } catch (e) {
+          print('ChoicesQuizPage: Error saving user progress: $e');
+        }
+      }
+    }
+
+    // Chuyển đến trang kết quả thay vì hiển thị hộp thoại
+    print('ChoicesQuizPage: Navigating to result page');
+    try {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => QuizResultPage(
+            score: _score,
+            totalQuestions: _totalQuestions,
+            onRetry: () {
+              print('ChoicesQuizPage: onRetry callback called');
+              // Sử dụng BuildContext từ trang hiện tại
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Quay lại trang chủ'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
+              // Đặt lại trạng thái
               setState(() {
                 _currentQuestionIndex = 0;
                 _selectedOptionId = null;
@@ -448,11 +436,24 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
                 _score = 0;
               });
             },
-            child: const Text('Làm lại'),
+            onHome: () {
+              print('ChoicesQuizPage: onHome callback called');
+              // Sử dụng BuildContext từ trang hiện tại
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
           ),
-        ],
-      ),
-    ));
+        ),
+      );
+    } catch (e) {
+      print('ChoicesQuizPage: Error navigating to result page: $e');
+      // Nếu có lỗi, hiển thị thông báo
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Color _getScoreColor(double percentage) {

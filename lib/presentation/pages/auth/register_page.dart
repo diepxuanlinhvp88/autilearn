@@ -52,7 +52,8 @@ class _RegisterPageState extends State<RegisterPage> {
       final name = _nameController.text.trim();
       final role = _selectedRole;
 
-      print('Submitting registration form with role: $role');
+      print('RegisterPage: Submitting registration form with role: $role');
+      print('RegisterPage: Name: $name, Email: $email');
 
       context.read<AuthBloc>().add(
             RegisterRequested(

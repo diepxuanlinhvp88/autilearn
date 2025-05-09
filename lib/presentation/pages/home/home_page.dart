@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../teacher/create_quiz_page.dart';
 import '../teacher/manage_quizzes_page.dart';
 import '../../../core/constants/app_constants.dart';
@@ -30,15 +31,36 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Phương thức lấy tên người dùng trực tiếp từ Firestore
+  Future<String> _getUserName(String userId) async {
+    try {
+      print('Getting user name for userId: $userId');
+      final firestore = FirebaseFirestore.instance;
+      final doc = await firestore.collection('users').doc(userId).get();
+
+      if (!doc.exists) {
+        print('User document does not exist');
+        return '';
+      }
+
+      final data = doc.data() as Map<String, dynamic>?;
+      final name = data?['name'] as String? ?? '';
+      print('User name from Firestore: $name');
+      return name;
+    } catch (e) {
+      print('Error getting user name: $e');
+      return '';
+    }
+  }
   int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    // Sử dụng AuthBloc từ cấp ứng dụng
+    print('HomePage: Current AuthState: ${context.watch<AuthBloc>().state}');
+
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>()..add(const AuthCheckRequested()),
-        ),
         BlocProvider<QuizBloc>(
           create: (context) => getIt<QuizBloc>()..add(const LoadQuizzes(isPublished: true)),
         ),
@@ -49,49 +71,13 @@ class _HomePageState extends State<HomePage> {
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
           if (authState is Authenticated) {
-            // Tự động tải thông tin người dùng (chỉ gọi một lần khi UserBloc đang ở trạng thái ban đầu)
-            if (context.read<UserBloc>().state is UserInitial) {
-              print('HomePage: Loading user profile once');
-              context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
-            }
+            // Luôn tải lại thông tin người dùng để đảm bảo có thông tin mới nhất
+            print('HomePage: Loading user profile for user: ${authState.user.uid}');
+            context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
             return Scaffold(
               appBar: AppBar(
                 title: const Text('AutiLearn'),
                 actions: [
-                  // Nút tạo bài học cho giáo viên và phụ huynh
-                  BlocBuilder<UserBloc, UserState>(
-                    builder: (context, userState) {
-                      // Chỉ hiển thị loading nếu UserBloc đang ở trạng thái ban đầu
-                      if (userState is UserInitial) {
-                        return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
-                      }
-
-                      if (userState is UserError) {
-                        print('Error getting user profile: ${userState.message}');
-                        return const SizedBox.shrink();
-                      }
-
-                      // Hiển thị nút tạo bài học nếu là giáo viên hoặc phụ huynh
-                      if (userState is UserProfileLoaded &&
-                          (userState.user.role == AppConstants.roleTeacher ||
-                           userState.user.role == AppConstants.roleParent)) {
-                        print('Showing create quiz button for role: ${userState.user.role}');
-                        return IconButton(
-                          icon: const Icon(Icons.add_circle),
-                          tooltip: 'Tạo bài học mới',
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const CreateQuizPage(),
-                              ),
-                            );
-                          },
-                        );
-                      }
-
-                      return const SizedBox.shrink();
-                    },
-                  ),
                   IconButton(
                     icon: const Icon(Icons.logout),
                     onPressed: () {
@@ -234,19 +220,23 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.blue.shade100,
-                      child: Text(
-                        (authState.user.displayName?.isNotEmpty ?? false)
-                            ? authState.user.displayName![0].toUpperCase()
-                            : 'A',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
+                    FutureBuilder<String>(
+                      future: _getUserName(authState.user.uid),
+                      builder: (context, snapshot) {
+                        final displayName = snapshot.data ?? authState.user.displayName ?? 'A';
+                        return CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.blue.shade100,
+                          child: Text(
+                            displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -367,11 +357,9 @@ class _HomePageState extends State<HomePage> {
                             ),
                             child: InkWell(
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const CreateQuizPage(),
-                                  ),
-                                );
+                                print('HomePage: Navigating to CreateQuizPage');
+                                print('HomePage: Current AuthState: ${context.read<AuthBloc>().state}');
+                                Navigator.of(context).pushNamed(AppRouter.createQuiz);
                               },
                               borderRadius: BorderRadius.circular(16),
                               child: Padding(
@@ -427,11 +415,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             child: InkWell(
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const ManageQuizzesPage(),
-                                  ),
-                                );
+                                Navigator.of(context).pushNamed(AppRouter.manageQuizzes);
                               },
                               borderRadius: BorderRadius.circular(16),
                               child: Padding(

@@ -61,3 +61,12 @@ class EnsureUserInFirestore extends AuthEvent {
   @override
   List<Object?> get props => [userId, name, email, role];
 }
+
+class RefreshUserInfo extends AuthEvent {
+  final String userId;
+
+  const RefreshUserInfo(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
+}

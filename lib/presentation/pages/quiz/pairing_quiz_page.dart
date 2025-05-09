@@ -208,31 +208,38 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
                                       textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 8),
-                                    ...leftOptions.map((option) {
-                                      final isPaired = _userPairs.containsKey(option.id);
-                                      final isSelected = option.id == _selectedLeftItemId;
-                                      final pairedRightId = _userPairs[option.id];
-                                      final isCorrectPair = _isAnswerChecked &&
-                                        currentQuestion.correctPairs?[option.id] == pairedRightId;
-                                      final isWrongPair = _isAnswerChecked && isPaired && !isCorrectPair;
+                                    // Sử dụng ListView.builder để đảm bảo khoảng cách đồng đều
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: leftOptions.length,
+                                      itemBuilder: (context, index) {
+                                        final option = leftOptions[index];
+                                        final isPaired = _userPairs.containsKey(option.id);
+                                        final isSelected = option.id == _selectedLeftItemId;
+                                        final pairedRightId = _userPairs[option.id];
+                                        final isCorrectPair = _isAnswerChecked &&
+                                          currentQuestion.correctPairs?[option.id] == pairedRightId;
+                                        final isWrongPair = _isAnswerChecked && isPaired && !isCorrectPair;
 
-                                      return Padding(
-                                        padding: const EdgeInsets.only(bottom: 8.0),
-                                        child: PairingItemCard(
-                                          option: option,
-                                          isSelected: isSelected,
-                                          isPaired: isPaired,
-                                          isCorrect: isCorrectPair,
-                                          isWrong: isWrongPair,
-                                          onTap: _isAnswerChecked ? null : () {
-                                            setState(() {
-                                              _selectedLeftItemId = option.id;
-                                              _selectedRightItemId = null;
-                                            });
-                                          },
-                                        ),
-                                      );
-                                    }).toList(),
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 8.0),
+                                          child: PairingItemCard(
+                                            option: option,
+                                            isSelected: isSelected,
+                                            isPaired: isPaired,
+                                            isCorrect: isCorrectPair,
+                                            isWrong: isWrongPair,
+                                            onTap: _isAnswerChecked ? null : () {
+                                              setState(() {
+                                                _selectedLeftItemId = option.id;
+                                                _selectedRightItemId = null;
+                                              });
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ],
                                 ),
                               ),
@@ -241,7 +248,7 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
                                 SizedBox(
                                   width: 40,
                                   child: CustomPaint(
-                                    size: Size(40, leftOptions.length * 100.0),
+                                    size: Size(40, leftOptions.length * 88.0), // 80px cho chiều cao của mỗi ô + 8px cho padding
                                     painter: ConnectionPainter(
                                       leftOptions: leftOptions,
                                       rightOptions: rightOptions,
@@ -264,38 +271,45 @@ class _PairingQuizPageState extends State<PairingQuizPage> {
                                       textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 8),
-                                    ...rightOptions.map((option) {
-                                      final isPaired = _userPairs.containsValue(option.id);
-                                      final isSelected = option.id == _selectedRightItemId;
-                                      final pairedLeftId = _userPairs.entries
-                                        .firstWhere((entry) => entry.value == option.id,
-                                          orElse: () => const MapEntry('', '')).key;
-                                      final isCorrectPair = _isAnswerChecked &&
-                                        currentQuestion.correctPairs?[pairedLeftId] == option.id;
-                                      final isWrongPair = _isAnswerChecked && isPaired && !isCorrectPair;
+                                    // Sử dụng ListView.builder để đảm bảo khoảng cách đồng đều
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: rightOptions.length,
+                                      itemBuilder: (context, index) {
+                                        final option = rightOptions[index];
+                                        final isPaired = _userPairs.containsValue(option.id);
+                                        final isSelected = option.id == _selectedRightItemId;
+                                        final pairedLeftId = _userPairs.entries
+                                          .firstWhere((entry) => entry.value == option.id,
+                                            orElse: () => const MapEntry('', '')).key;
+                                        final isCorrectPair = _isAnswerChecked &&
+                                          currentQuestion.correctPairs?[pairedLeftId] == option.id;
+                                        final isWrongPair = _isAnswerChecked && isPaired && !isCorrectPair;
 
-                                      return Padding(
-                                        padding: const EdgeInsets.only(bottom: 8.0),
-                                        child: PairingItemCard(
-                                          option: option,
-                                          isSelected: isSelected,
-                                          isPaired: isPaired,
-                                          isCorrect: isCorrectPair,
-                                          isWrong: isWrongPair,
-                                          onTap: _isAnswerChecked || _selectedLeftItemId == null ? null : () {
-                                            setState(() {
-                                              _selectedRightItemId = option.id;
-                                              // Create pair
-                                              if (_selectedLeftItemId != null) {
-                                                _userPairs[_selectedLeftItemId!] = option.id;
-                                                _selectedLeftItemId = null;
-                                                _selectedRightItemId = null;
-                                              }
-                                            });
-                                          },
-                                        ),
-                                      );
-                                    }).toList(),
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 8.0),
+                                          child: PairingItemCard(
+                                            option: option,
+                                            isSelected: isSelected,
+                                            isPaired: isPaired,
+                                            isCorrect: isCorrectPair,
+                                            isWrong: isWrongPair,
+                                            onTap: _isAnswerChecked || _selectedLeftItemId == null ? null : () {
+                                              setState(() {
+                                                _selectedRightItemId = option.id;
+                                                // Create pair
+                                                if (_selectedLeftItemId != null) {
+                                                  _userPairs[_selectedLeftItemId!] = option.id;
+                                                  _selectedLeftItemId = null;
+                                                  _selectedRightItemId = null;
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ],
                                 ),
                               ),
@@ -700,7 +714,8 @@ class ConnectionPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double itemHeight = size.height / leftOptions.length;
+    // Tính toán chiều cao của mỗi mục, bao gồm cả padding
+    final double itemHeight = 88.0; // 80px cho chiều cao của mỗi ô + 8px cho padding
 
     for (int i = 0; i < leftOptions.length; i++) {
       final leftOption = leftOptions[i];
@@ -709,8 +724,9 @@ class ConnectionPainter extends CustomPainter {
         final rightIndex = rightOptions.indexWhere((option) => option.id == rightId);
 
         if (rightIndex != -1) {
-          final startY = i * itemHeight + itemHeight / 2;
-          final endY = rightIndex * itemHeight + itemHeight / 2;
+          // Tính toán vị trí y của điểm bắt đầu và kết thúc
+          final startY = i * itemHeight + 40; // 40 là giữa của ô có chiều cao 80px
+          final endY = rightIndex * itemHeight + 40;
 
           final paint = Paint()
             ..color = isAnswerChecked
