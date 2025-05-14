@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import '../../core/error/failures.dart';
+import '../../core/utils/firestore_query_helper.dart';
 import '../models/user_model.dart';
 import '../models/quiz_model.dart';
 import '../models/question_model.dart';
@@ -12,27 +14,30 @@ import '../models/skill_assessment_model.dart';
 import '../models/schedule_model.dart';
 
 class FirebaseDataSource {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  FirebaseDataSource({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // User methods
-  Future<Either<String, UserModel>> getUserById(String userId) async {
+  Future<Either<Failure, UserModel>> getUserById(String userId) async {
     try {
       print('Fetching user from Firestore with ID: $userId');
       final doc = await _firestore.collection('users').doc(userId).get();
       if (!doc.exists) {
         print('User document does not exist in Firestore');
-        return Left('User not found');
+        return Left(DatabaseFailure('User not found'));
       }
       final userData = doc.data() as Map<String, dynamic>?;
       print('User data from Firestore: $userData');
       return Right(UserModel.fromFirestore(doc));
     } catch (e) {
       print('Error fetching user from Firestore: $e');
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> createUser(UserModel user) async {
+  Future<Either<Failure, bool>> createUser(UserModel user) async {
     try {
       print('Creating user in Firestore with ID: ${user.id}, role: ${user.role}');
       final userData = user.toMap();
@@ -42,21 +47,21 @@ class FirebaseDataSource {
       return const Right(true);
     } catch (e) {
       print('Error creating user in Firestore: $e');
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateUser(UserModel user) async {
+  Future<Either<Failure, bool>> updateUser(UserModel user) async {
     try {
       await _firestore.collection('users').doc(user.id).update(user.toMap());
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Quiz methods
-  Future<Either<String, List<QuizModel>>> getQuizzes({
+  Future<Either<Failure, List<QuizModel>>> getQuizzes({
     String? type,
     String? difficulty,
     String? category,
@@ -102,53 +107,53 @@ class FirebaseDataSource {
       return Right(quizzes);
     } catch (e) {
       print('Error fetching quizzes from Firestore: $e');
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, QuizModel>> getQuizById(String quizId) async {
+  Future<Either<Failure, QuizModel>> getQuizById(String quizId) async {
     try {
       final doc = await _firestore.collection('quizzes').doc(quizId).get();
       if (!doc.exists) {
-        return Left('Quiz not found');
+        return Left(DatabaseFailure('Quiz not found'));
       }
       return Right(QuizModel.fromFirestore(doc));
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, String>> createQuiz(QuizModel quiz) async {
+  Future<Either<Failure, String>> createQuiz(QuizModel quiz) async {
     try {
       final docRef = await _firestore.collection('quizzes').add(quiz.toMap());
       return Right(docRef.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateQuiz(QuizModel quiz) async {
+  Future<Either<Failure, bool>> updateQuiz(QuizModel quiz) async {
     try {
       await _firestore.collection('quizzes').doc(quiz.id).update(quiz.toMap());
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> deleteQuiz(String quizId) async {
+  Future<Either<Failure, bool>> deleteQuiz(String quizId) async {
     try {
       await _firestore.collection('quizzes').doc(quizId).delete();
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Question methods
-  Future<Either<String, List<QuestionModel>>> getQuestionsByQuizId(String quizId) async {
-    try {
-      print('Fetching questions for quiz ID: $quizId');
+  Future<Either<Failure, List<QuestionModel>>> getQuestionsByQuizId(String quizId) async {
+    print('Fetching questions for quiz ID: $quizId');
+    return FirestoreQueryHelper.executeQuery<List<QuestionModel>>(() async {
       final querySnapshot = await _firestore
           .collection('questions')
           .where('quizId', isEqualTo: quizId)
@@ -167,43 +172,37 @@ class FirebaseDataSource {
         print('No questions found for quiz ID: $quizId');
       }
 
-      return Right(questions);
-    } catch (e) {
-      print('Error fetching questions from Firestore: $e');
-      return Left(e.toString());
-    }
+      return questions;
+    });
   }
 
-  Future<Either<String, QuestionModel>> getQuestionById(String questionId) async {
-    try {
-      print('Fetching question with ID: $questionId');
+  Future<Either<Failure, QuestionModel>> getQuestionById(String questionId) async {
+    print('Fetching question with ID: $questionId');
+    return FirestoreQueryHelper.executeQuery<QuestionModel>(() async {
       final doc = await _firestore.collection('questions').doc(questionId).get();
 
       if (!doc.exists) {
         print('Question document does not exist in Firestore');
-        return Left('Question not found');
+        throw DatabaseFailure('Question not found');
       }
 
       final question = QuestionModel.fromFirestore(doc);
       print('Found question: id=${question.id}, text=${question.text}');
 
-      return Right(question);
-    } catch (e) {
-      print('Error fetching question from Firestore: $e');
-      return Left(e.toString());
-    }
+      return question;
+    });
   }
 
-  Future<Either<String, String>> createQuestion(QuestionModel question) async {
+  Future<Either<Failure, String>> createQuestion(QuestionModel question) async {
     try {
       final docRef = await _firestore.collection('questions').add(question.toMap());
       return Right(docRef.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateQuestion(QuestionModel question) async {
+  Future<Either<Failure, bool>> updateQuestion(QuestionModel question) async {
     try {
       print('Updating question with ID: ${question.id}');
       final questionData = question.toMap();
@@ -215,21 +214,21 @@ class FirebaseDataSource {
       return const Right(true);
     } catch (e) {
       print('Error updating question: $e');
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> deleteQuestion(String questionId) async {
+  Future<Either<Failure, bool>> deleteQuestion(String questionId) async {
     try {
       await _firestore.collection('questions').doc(questionId).delete();
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // User Progress methods
-  Future<Either<String, List<UserProgressModel>>> getUserProgressByUserId(String userId) async {
+  Future<Either<Failure, List<UserProgressModel>>> getUserProgressByUserId(String userId) async {
     try {
       final querySnapshot = await _firestore
           .collection('user_progress')
@@ -241,11 +240,11 @@ class FirebaseDataSource {
           .toList();
       return Right(progress);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, UserProgressModel>> getUserProgressByQuizId(String userId, String quizId) async {
+  Future<Either<Failure, UserProgressModel>> getUserProgressByQuizId(String userId, String quizId) async {
     try {
       final querySnapshot = await _firestore
           .collection('user_progress')
@@ -256,26 +255,26 @@ class FirebaseDataSource {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        return Left('No progress found');
+        return Left(DatabaseFailure('No progress found'));
       }
 
       return Right(UserProgressModel.fromFirestore(querySnapshot.docs.first));
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, String>> saveUserProgress(UserProgressModel progress) async {
+  Future<Either<Failure, String>> saveUserProgress(UserProgressModel progress) async {
     try {
       final docRef = await _firestore.collection('user_progress').add(progress.toMap());
       return Right(docRef.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Phương thức cho hệ thống huy hiệu
-  Future<Either<String, List<BadgeModel>>> getUserBadges(String userId) async {
+  Future<Either<Failure, List<BadgeModel>>> getUserBadges(String userId) async {
     try {
       final querySnapshot = await _firestore
           .collection('users')
@@ -289,11 +288,11 @@ class FirebaseDataSource {
 
       return Right(badges);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, String>> unlockBadge(String userId, BadgeModel badge) async {
+  Future<Either<Failure, String>> unlockBadge(String userId, BadgeModel badge) async {
     try {
       final updatedBadge = badge.copyWith(
         isUnlocked: true,
@@ -309,12 +308,12 @@ class FirebaseDataSource {
 
       return Right(badge.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Phương thức cho hệ thống phần thưởng
-  Future<Either<String, List<RewardModel>>> getAvailableRewards() async {
+  Future<Either<Failure, List<RewardModel>>> getAvailableRewards() async {
     try {
       final querySnapshot = await _firestore
           .collection('rewards')
@@ -326,11 +325,11 @@ class FirebaseDataSource {
 
       return Right(rewards);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, List<RewardModel>>> getUserRewards(String userId) async {
+  Future<Either<Failure, List<RewardModel>>> getUserRewards(String userId) async {
     try {
       final querySnapshot = await _firestore
           .collection('users')
@@ -344,11 +343,11 @@ class FirebaseDataSource {
 
       return Right(rewards);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, String>> purchaseReward(String userId, RewardModel reward) async {
+  Future<Either<Failure, String>> purchaseReward(String userId, RewardModel reward) async {
     try {
       final updatedReward = reward.copyWith(
         isPurchased: true,
@@ -364,12 +363,12 @@ class FirebaseDataSource {
 
       return Right(reward.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Phương thức cho hệ thống tiền tệ
-  Future<Either<String, CurrencyModel>> getUserCurrency(String userId) async {
+  Future<Either<Failure, CurrencyModel>> getUserCurrency(String userId) async {
     try {
       final doc = await _firestore
           .collection('users')
@@ -400,11 +399,11 @@ class FirebaseDataSource {
 
       return Right(CurrencyModel.fromFirestore(doc));
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateUserCurrency(CurrencyModel currency) async {
+  Future<Either<Failure, bool>> updateUserCurrency(CurrencyModel currency) async {
     try {
       await _firestore
           .collection('users')
@@ -415,12 +414,12 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Phương thức cho phân tích dữ liệu
-  Future<Either<String, AnalyticsModel>> getUserAnalytics(String userId) async {
+  Future<Either<Failure, AnalyticsModel>> getUserAnalytics(String userId) async {
     try {
       final doc = await _firestore
           .collection('users')
@@ -448,11 +447,11 @@ class FirebaseDataSource {
 
       return Right(AnalyticsModel.fromFirestore(doc));
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateUserAnalytics(AnalyticsModel analytics) async {
+  Future<Either<Failure, bool>> updateUserAnalytics(AnalyticsModel analytics) async {
     try {
       await _firestore
           .collection('users')
@@ -463,11 +462,11 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, List<StudentAnalytics>>> getStudentAnalytics(String teacherId) async {
+  Future<Either<Failure, List<StudentAnalytics>>> getStudentAnalytics(String teacherId) async {
     try {
       // Lấy danh sách học sinh của giáo viên
       final studentsQuery = await _firestore
@@ -502,11 +501,11 @@ class FirebaseDataSource {
 
       return Right(studentAnalyticsList);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateAnalyticsFromProgress(String userId) async {
+  Future<Either<Failure, bool>> updateAnalyticsFromProgress(String userId) async {
     try {
       // Lấy tất cả tiến trình của người dùng
       final progressQuery = await _firestore
@@ -626,12 +625,12 @@ class FirebaseDataSource {
         },
       );
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Phương thức cho đánh giá kỹ năng
-  Future<Either<String, List<SkillAssessmentModel>>> getStudentAssessments(String studentId) async {
+  Future<Either<Failure, List<SkillAssessmentModel>>> getStudentAssessments(String studentId) async {
     try {
       final querySnapshot = await _firestore
           .collection('skill_assessments')
@@ -645,11 +644,11 @@ class FirebaseDataSource {
 
       return Right(assessments);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, List<SkillAssessmentModel>>> getTeacherAssessments(String teacherId) async {
+  Future<Either<Failure, List<SkillAssessmentModel>>> getTeacherAssessments(String teacherId) async {
     try {
       final querySnapshot = await _firestore
           .collection('skill_assessments')
@@ -663,11 +662,11 @@ class FirebaseDataSource {
 
       return Right(assessments);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, SkillAssessmentModel>> getAssessment(String assessmentId) async {
+  Future<Either<Failure, SkillAssessmentModel>> getAssessment(String assessmentId) async {
     try {
       final doc = await _firestore
           .collection('skill_assessments')
@@ -675,16 +674,16 @@ class FirebaseDataSource {
           .get();
 
       if (!doc.exists) {
-        return Left('Không tìm thấy đánh giá');
+        return Left(DatabaseFailure('Không tìm thấy đánh giá'));
       }
 
       return Right(SkillAssessmentModel.fromFirestore(doc));
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, String>> createAssessment(SkillAssessmentModel assessment) async {
+  Future<Either<Failure, String>> createAssessment(SkillAssessmentModel assessment) async {
     try {
       final docRef = await _firestore
           .collection('skill_assessments')
@@ -692,11 +691,11 @@ class FirebaseDataSource {
 
       return Right(docRef.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateAssessment(SkillAssessmentModel assessment) async {
+  Future<Either<Failure, bool>> updateAssessment(SkillAssessmentModel assessment) async {
     try {
       await _firestore
           .collection('skill_assessments')
@@ -705,11 +704,11 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> deleteAssessment(String assessmentId) async {
+  Future<Either<Failure, bool>> deleteAssessment(String assessmentId) async {
     try {
       await _firestore
           .collection('skill_assessments')
@@ -718,12 +717,12 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
   // Phương thức cho lịch học và nhắc nhở
-  Future<Either<String, List<ScheduleModel>>> getUserSchedules(String userId) async {
+  Future<Either<Failure, List<ScheduleModel>>> getUserSchedules(String userId) async {
     try {
       final querySnapshot = await _firestore
           .collection('schedules')
@@ -737,11 +736,11 @@ class FirebaseDataSource {
 
       return Right(schedules);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, List<ScheduleModel>>> getUpcomingSchedules(String userId) async {
+  Future<Either<Failure, List<ScheduleModel>>> getUpcomingSchedules(String userId) async {
     try {
       final now = DateTime.now();
       final querySnapshot = await _firestore
@@ -758,11 +757,11 @@ class FirebaseDataSource {
 
       return Right(schedules);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, ScheduleModel>> getSchedule(String scheduleId) async {
+  Future<Either<Failure, ScheduleModel>> getSchedule(String scheduleId) async {
     try {
       final doc = await _firestore
           .collection('schedules')
@@ -770,16 +769,16 @@ class FirebaseDataSource {
           .get();
 
       if (!doc.exists) {
-        return Left('Không tìm thấy lịch học');
+        return Left(DatabaseFailure('Không tìm thấy lịch học'));
       }
 
       return Right(ScheduleModel.fromFirestore(doc));
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, String>> createSchedule(ScheduleModel schedule) async {
+  Future<Either<Failure, String>> createSchedule(ScheduleModel schedule) async {
     try {
       final docRef = await _firestore
           .collection('schedules')
@@ -787,11 +786,11 @@ class FirebaseDataSource {
 
       return Right(docRef.id);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> updateSchedule(ScheduleModel schedule) async {
+  Future<Either<Failure, bool>> updateSchedule(ScheduleModel schedule) async {
     try {
       await _firestore
           .collection('schedules')
@@ -800,11 +799,11 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> deleteSchedule(String scheduleId) async {
+  Future<Either<Failure, bool>> deleteSchedule(String scheduleId) async {
     try {
       await _firestore
           .collection('schedules')
@@ -813,11 +812,11 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 
-  Future<Either<String, bool>> markScheduleAsCompleted(String scheduleId) async {
+  Future<Either<Failure, bool>> markScheduleAsCompleted(String scheduleId) async {
     try {
       await _firestore
           .collection('schedules')
@@ -826,7 +825,7 @@ class FirebaseDataSource {
 
       return const Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(DatabaseFailure(e.toString()));
     }
   }
 }

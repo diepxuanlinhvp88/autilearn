@@ -394,14 +394,20 @@ class _ChoicesQuizPageState extends State<ChoicesQuizPage> {
 
         // Tạo mô hình tiến trình
         final progress = UserProgressModel(
-          id: '', // ID sẽ được tạo bởi Firebase
+          id: '',
           userId: userId,
-          quizId: quizId,
+          quizId: widget.quizId ?? '',
           score: _score,
-          totalQuestions: _totalQuestions,
-          attempts: attempts,
+          isCompleted: true,
+          startedAt: DateTime.now(),
           completedAt: DateTime.now(),
-          timeSpentSeconds: 0, // Có thể thêm tính năng đo thời gian sau
+          answers: Map.fromEntries(
+            attempts.asMap().entries.map(
+              (entry) => MapEntry(entry.key.toString(), entry.value.toMap()),
+            ),
+          ),
+          totalQuestions: _totalQuestions,
+          timeSpentSeconds: 0,
           starsEarned: starsEarned,
         );
 

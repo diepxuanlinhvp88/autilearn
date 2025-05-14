@@ -27,8 +27,8 @@ class _CreateSchedulePageState extends State<CreateSchedulePage> {
   String _description = '';
   DateTime _startDate = DateTime.now();
   TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(
-    hour: TimeOfDay.now().hour + 1,
+  TimeOfDay _endTime = TimeOfDay.fromDateTime(
+    DateTime.now().add(const Duration(hours: 1)),
   );
 
   bool _isRecurring = false;

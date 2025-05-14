@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dartz/dartz.dart';
 import '../../../data/repositories/reward_repository.dart';
+import '../../../data/models/badge_model.dart';
+import '../../../data/models/reward_model.dart';
+import '../../../data/models/currency_model.dart';
 import 'reward_event.dart';
 import 'reward_state.dart';
 
@@ -23,12 +26,16 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
     Emitter<RewardState> emit,
   ) async {
     emit(const RewardLoading());
-    final result = await rewardRepository.getUserBadges(event.userId);
 
-    result.fold(
-      (error) => emit(RewardError(error)),
-      (badges) => emit(BadgesLoaded(badges)),
-    );
+    try {
+      final result = await rewardRepository.getUserBadges(event.userId);
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (badges) => emit(BadgesLoaded(badges)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onUnlockBadge(
@@ -36,12 +43,16 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
     Emitter<RewardState> emit,
   ) async {
     emit(const RewardLoading());
-    final result = await rewardRepository.unlockBadge(event.userId, event.badge);
 
-    result.fold(
-      (error) => emit(RewardError(error)),
-      (_) => emit(BadgeUnlocked(event.badge)),
-    );
+    try {
+      final result = await rewardRepository.unlockBadge(event.userId, event.badge);
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (message) => emit(BadgeUnlocked(event.badge)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onLoadAvailableRewards(
@@ -49,12 +60,16 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
     Emitter<RewardState> emit,
   ) async {
     emit(const RewardLoading());
-    final result = await rewardRepository.getAvailableRewards();
 
-    result.fold(
-      (error) => emit(RewardError(error)),
-      (rewards) => emit(AvailableRewardsLoaded(rewards)),
-    );
+    try {
+      final result = await rewardRepository.getAvailableRewards();
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (rewards) => emit(AvailableRewardsLoaded(rewards)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onLoadUserRewards(
@@ -62,12 +77,16 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
     Emitter<RewardState> emit,
   ) async {
     emit(const RewardLoading());
-    final result = await rewardRepository.getUserRewards(event.userId);
 
-    result.fold(
-      (error) => emit(RewardError(error)),
-      (rewards) => emit(UserRewardsLoaded(rewards)),
-    );
+    try {
+      final result = await rewardRepository.getUserRewards(event.userId);
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (rewards) => emit(UserRewardsLoaded(rewards)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onPurchaseReward(
@@ -76,51 +95,15 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
   ) async {
     emit(const RewardLoading());
 
-    // Kiểm tra xem người dùng có đủ tiền không
-    final currencyResult = await rewardRepository.getUserCurrency(event.userId);
-
-    await currencyResult.fold(
-      (error) async {
-        emit(RewardError('Không thể lấy thông tin tiền tệ: $error'));
-      },
-      (currency) async {
-        // Kiểm tra xem có đủ tiền không
-        if (currency.coins < event.reward.cost) {
-          emit(RewardError('Không đủ tiền để mua phần thưởng này'));
-          return;
-        }
-
-        // Trừ tiền
-        final updatedCurrency = currency.copyWith(
-          coins: currency.coins - event.reward.cost,
-          lastUpdated: DateTime.now(),
-        );
-
-        // Cập nhật tiền tệ
-        final updateResult = await rewardRepository.updateUserCurrency(updatedCurrency);
-
-        await updateResult.fold(
-          (error) async {
-            emit(RewardError('Lỗi cập nhật tiền tệ: $error'));
-          },
-          (_) async {
-            // Mua phần thưởng
-            final purchaseResult = await rewardRepository.purchaseReward(event.userId, event.reward);
-
-            await purchaseResult.fold(
-              (error) async {
-                emit(RewardError('Lỗi mua phần thưởng: $error'));
-              },
-              (_) async {
-                emit(RewardPurchased(event.reward));
-                // Tải lại tiền tệ
-                add(LoadUserCurrency(event.userId));
-              },
-            );
-          },
-        );
-      },
-    );
+    try {
+      final result = await rewardRepository.purchaseReward(event.userId, event.reward);
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (message) => emit(RewardPurchased(event.reward)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onLoadUserCurrency(
@@ -128,12 +111,16 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
     Emitter<RewardState> emit,
   ) async {
     emit(const RewardLoading());
-    final result = await rewardRepository.getUserCurrency(event.userId);
 
-    result.fold(
-      (error) => emit(RewardError(error)),
-      (currency) => emit(CurrencyLoaded(currency)),
-    );
+    try {
+      final result = await rewardRepository.getUserCurrency(event.userId);
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (currency) => emit(CurrencyLoaded(currency)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onUpdateUserCurrency(
@@ -141,12 +128,16 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
     Emitter<RewardState> emit,
   ) async {
     emit(const RewardLoading());
-    final result = await rewardRepository.updateUserCurrency(event.currency);
-
-    result.fold(
-      (error) => emit(RewardError(error)),
-      (_) => emit(CurrencyUpdated(event.currency)),
-    );
+    
+    try {
+      final result = await rewardRepository.updateUserCurrency(event.currency);
+      result.fold(
+        (failure) => emit(RewardError(failure.toString())),
+        (success) => emit(CurrencyUpdated(event.currency)),
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 
   Future<void> _onAddCurrency(
@@ -155,34 +146,28 @@ class RewardBloc extends Bloc<RewardEvent, RewardState> {
   ) async {
     emit(const RewardLoading());
 
-    // Lấy tiền tệ hiện tại
-    final currencyResult = await rewardRepository.getUserCurrency(event.userId);
+    try {
+      final currencyResult = await rewardRepository.getUserCurrency(event.userId);
+      
+      currencyResult.fold(
+        (error) => emit(RewardError('Không thể lấy thông tin tiền tệ: $error')),
+        (currency) async {
+          final updatedCurrency = currency.copyWith(
+            stars: currency.stars + event.stars,
+            coins: currency.coins + event.coins,
+            gems: currency.gems + event.gems,
+            lastUpdated: DateTime.now(),
+          );
 
-    await currencyResult.fold(
-      (error) async {
-        emit(RewardError('Không thể lấy thông tin tiền tệ: $error'));
-      },
-      (currency) async {
-        // Cập nhật tiền tệ
-        final updatedCurrency = currency.copyWith(
-          stars: currency.stars + event.stars,
-          coins: currency.coins + event.coins,
-          gems: currency.gems + event.gems,
-          lastUpdated: DateTime.now(),
-        );
-
-        // Lưu tiền tệ mới
-        final result = await rewardRepository.updateUserCurrency(updatedCurrency);
-
-        await result.fold(
-          (error) async {
-            emit(RewardError('Lỗi cập nhật tiền tệ: $error'));
-          },
-          (_) async {
-            emit(CurrencyUpdated(updatedCurrency));
-          },
-        );
-      },
-    );
+          final result = await rewardRepository.updateUserCurrency(updatedCurrency);
+          result.fold(
+            (error) => emit(RewardError('Lỗi cập nhật tiền tệ: $error')),
+            (success) => emit(CurrencyUpdated(updatedCurrency)),
+          );
+        },
+      );
+    } catch (e) {
+      emit(RewardError(e.toString()));
+    }
   }
 }

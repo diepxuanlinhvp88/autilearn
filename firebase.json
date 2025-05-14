@@ -1,1 +1,29 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"autilearn-21431","appId":"1:957482988455:android:678875427952f4f04cfc82","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"autilearn-21431","configurations":{"android":"1:957482988455:android:678875427952f4f04cfc82","ios":"1:957482988455:ios:9d63dd16af1f85484cfc82","macos":"1:957482988455:ios:9d63dd16af1f85484cfc82","web":"1:957482988455:web:abebad57fcaeb6e04cfc82","windows":"1:957482988455:web:d1061967504f24cb4cfc82"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "autilearn-b095b",
+          "appId": "1:705540150945:android:f01ee2bcfbc37cf7b382e0",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "autilearn-b095b",
+          "configurations": {
+            "android": "1:705540150945:android:f01ee2bcfbc37cf7b382e0",
+            "ios": "1:705540150945:ios:1adc2739db28cc79b382e0",
+            "macos": "1:705540150945:ios:1adc2739db28cc79b382e0",
+            "web": "1:705540150945:web:a9a002d5d7d6a0e1b382e0",
+            "windows": "1:705540150945:web:39ef39273e5c73b8b382e0"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

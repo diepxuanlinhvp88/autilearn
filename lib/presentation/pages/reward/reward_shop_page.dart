@@ -43,7 +43,7 @@ class RewardShopPage extends StatelessWidget {
                         backgroundColor: Colors.green,
                       ),
                     );
-                    
+
                     // Tải lại danh sách phần thưởng
                     context.read<RewardBloc>().add(LoadAvailableRewards());
                     context.read<RewardBloc>().add(LoadUserRewards(authState.user.uid));
@@ -67,7 +67,7 @@ class RewardShopPage extends StatelessWidget {
                     List<RewardModel> availableRewards = [];
                     List<RewardModel> userRewards = [];
                     CurrencyModel? currency;
-                    
+
                     if (state is AvailableRewardsLoaded) {
                       availableRewards = state.rewards;
                     } else if (state is UserRewardsLoaded) {
@@ -75,12 +75,12 @@ class RewardShopPage extends StatelessWidget {
                     } else if (state is CurrencyLoaded) {
                       currency = state.currency;
                     }
-                    
+
                     return _buildShopContent(
-                      context, 
-                      authState.user.uid, 
-                      availableRewards, 
-                      userRewards, 
+                      context,
+                      authState.user.uid,
+                      availableRewards,
+                      userRewards,
                       currency
                     );
                   } else {
@@ -102,10 +102,10 @@ class RewardShopPage extends StatelessWidget {
   }
 
   Widget _buildShopContent(
-    BuildContext context, 
-    String userId, 
-    List<RewardModel> availableRewards, 
-    List<RewardModel> userRewards, 
+    BuildContext context,
+    String userId,
+    List<RewardModel> availableRewards,
+    List<RewardModel> userRewards,
     CurrencyModel? currency
   ) {
     return Column(
@@ -140,7 +140,7 @@ class RewardShopPage extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Shop content
         Expanded(
           child: SingleChildScrollView(
@@ -157,7 +157,7 @@ class RewardShopPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 if (availableRewards.isEmpty)
                   const Center(
                     child: Text('Không có phần thưởng nào'),
@@ -168,7 +168,7 @@ class RewardShopPage extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      childAspectRatio: 0.7,
+                      childAspectRatio: 0.6,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
@@ -176,12 +176,12 @@ class RewardShopPage extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final reward = availableRewards[index];
                       final isPurchased = userRewards.any((r) => r.id == reward.id);
-                      
+
                       // Tạo bản sao của phần thưởng với trạng thái đã mua
                       final displayReward = isPurchased
                           ? reward.copyWith(isPurchased: true)
                           : reward;
-                      
+
                       return RewardItem(
                         reward: displayReward,
                         showDetails: true,
@@ -195,9 +195,9 @@ class RewardShopPage extends StatelessWidget {
                       );
                     },
                   ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // User rewards
                 const Text(
                   'Phần thưởng đã mua',
@@ -207,7 +207,7 @@ class RewardShopPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 if (userRewards.isEmpty)
                   const Center(
                     child: Text('Bạn chưa mua phần thưởng nào'),
@@ -218,7 +218,7 @@ class RewardShopPage extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      childAspectRatio: 0.7,
+                      childAspectRatio: 0.6,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
@@ -320,13 +320,13 @@ class RewardShopPage extends StatelessWidget {
   }
 
   void _showPurchaseConfirmation(
-    BuildContext context, 
-    String userId, 
-    RewardModel reward, 
+    BuildContext context,
+    String userId,
+    RewardModel reward,
     CurrencyModel? currency
   ) {
     final bool canPurchase = currency != null && currency.coins >= reward.cost;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

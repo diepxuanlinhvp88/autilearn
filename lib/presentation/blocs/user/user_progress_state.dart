@@ -17,18 +17,22 @@ class UserProgressLoading extends UserProgressState {
 }
 
 class UserProgressLoaded extends UserProgressState {
-  final List<UserProgressModel> progressList;
+  final List<UserProgressModel> progress;
+  final int totalQuestions;
 
-  const UserProgressLoaded(this.progressList);
+  const UserProgressLoaded({
+    required this.progress,
+    required this.totalQuestions,
+  });
 
   @override
-  List<Object?> get props => [progressList];
+  List<Object?> get props => [progress, totalQuestions];
 }
 
-class SingleUserProgressLoaded extends UserProgressState {
+class QuizProgressLoaded extends UserProgressState {
   final UserProgressModel progress;
 
-  const SingleUserProgressLoaded(this.progress);
+  const QuizProgressLoaded(this.progress);
 
   @override
   List<Object?> get props => [progress];

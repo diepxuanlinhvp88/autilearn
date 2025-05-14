@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "957482988455",
-    "project_id": "autilearn-21431",
-    "storage_bucket": "autilearn-21431.firebasestorage.app"
+    "project_number": "705540150945",
+    "project_id": "autilearn-b095b",
+    "storage_bucket": "autilearn-b095b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:957482988455:android:678875427952f4f04cfc82",
+        "mobilesdk_app_id": "1:705540150945:android:f01ee2bcfbc37cf7b382e0",
         "android_client_info": {
           "package_name": "com.example.autilearn"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyByk5b5R9piGYw8c-29ixR9ygSUcWtr3h8"
+          "current_key": "AIzaSyAUS04Z_ezp9XkRHHDsCJ2Uwf0LxWCe4pg"
         }
       ],
       "services": {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../presentation/blocs/reward/reward_bloc.dart';
@@ -9,8 +10,15 @@ import '../../../presentation/widgets/reward/badge_item.dart';
 import '../../../data/models/badge_model.dart';
 import '../../../main.dart';
 
-class BadgesPage extends StatelessWidget {
+class BadgesPage extends StatefulWidget {
   const BadgesPage({Key? key}) : super(key: key);
+
+  @override
+  State<BadgesPage> createState() => _BadgesPageState();
+}
+
+class _BadgesPageState extends State<BadgesPage> {
+  String? _currentBadgeId;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +55,9 @@ class BadgesPage extends StatelessWidget {
                   if (state is RewardInitial) {
                     // Tải huy hiệu khi trang được tạo
                     context.read<RewardBloc>().add(LoadUserBadges(authState.user.uid));
+
+                    // Lấy thông tin huy hiệu hiện tại của người dùng
+                    _loadCurrentBadge(authState.user.uid);
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
@@ -79,6 +90,61 @@ class BadgesPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _loadCurrentBadge(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        if (userData != null && userData.containsKey('currentBadgeId')) {
+          setState(() {
+            _currentBadgeId = userData['currentBadgeId'] as String?;
+          });
+        }
+      }
+    } catch (e) {
+      print('Lỗi khi tải huy hiệu hiện tại: $e');
+    }
+  }
+
+  Future<void> _setCurrentBadge(BuildContext context, String userId, BadgeModel badge) async {
+    if (!badge.isUnlocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bạn chưa mở khóa huy hiệu này'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Cập nhật huy hiệu hiện tại của người dùng
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'currentBadgeId': badge.id,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      setState(() {
+        _currentBadgeId = badge.id;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã đặt "${badge.name}" làm huy hiệu hiện tại'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Lỗi khi cập nhật huy hiệu hiện tại: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Có lỗi xảy ra khi cập nhật huy hiệu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildBadgesList(BuildContext context, List<BadgeModel> badges) {
@@ -202,6 +268,12 @@ class BadgesPage extends StatelessWidget {
   }
 
   void _showBadgeDetails(BuildContext context, BadgeModel badge) {
+    final authState = context.read<AuthBloc>().state;
+    String? userId;
+    if (authState is Authenticated) {
+      userId = authState.user.uid;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -268,6 +340,40 @@ class BadgesPage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
+                ),
+              ),
+            ],
+
+            // Thêm nút đặt làm huy hiệu hiện tại nếu huy hiệu đã mở khóa
+            if (badge.isUnlocked && userId != null) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _currentBadgeId == badge.id
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        _setCurrentBadge(context, userId!, badge);
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _currentBadgeId == badge.id
+                      ? Colors.grey
+                      : Colors.blue,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  _currentBadgeId == badge.id
+                      ? 'Đang sử dụng'
+                      : 'Đặt làm huy hiệu hiện tại',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

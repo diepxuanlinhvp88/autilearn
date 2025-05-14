@@ -1,14 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/repositories/quiz_repository.dart';
+import '../../../data/models/user_progress_model.dart';
 import 'user_progress_event.dart';
 import 'user_progress_state.dart';
 
 class UserProgressBloc extends Bloc<UserProgressEvent, UserProgressState> {
-  final QuizRepository quizRepository;
+  final QuizRepository _quizRepository;
 
-  UserProgressBloc({required this.quizRepository}) : super(const UserProgressInitial()) {
+  UserProgressBloc({required QuizRepository quizRepository})
+      : _quizRepository = quizRepository,
+        super(const UserProgressInitial()) {
     on<LoadUserProgress>(_onLoadUserProgress);
-    on<LoadUserProgressByQuiz>(_onLoadUserProgressByQuiz);
+    on<LoadQuizProgress>(_onLoadQuizProgress);
     on<SaveUserProgress>(_onSaveUserProgress);
   }
 
@@ -17,28 +20,37 @@ class UserProgressBloc extends Bloc<UserProgressEvent, UserProgressState> {
     Emitter<UserProgressState> emit,
   ) async {
     emit(const UserProgressLoading());
-    final result = await quizRepository.getUserProgressByUserId(event.userId);
 
-    result.fold(
-      (error) => emit(UserProgressError(error)),
-      (progressList) => emit(UserProgressLoaded(progressList)),
-    );
+    try {
+      final result = await _quizRepository.getUserProgressByUserId(event.userId);
+      result.fold(
+        (failure) => emit(UserProgressError(failure.toString())),
+        (progress) {
+          // Calculate total questions from all progress
+          final totalQuestions = progress.fold(0, (sum, p) => sum + (p.totalQuestions ?? 0));
+          emit(UserProgressLoaded(progress: progress, totalQuestions: totalQuestions));
+        },
+      );
+    } catch (e) {
+      emit(UserProgressError(e.toString()));
+    }
   }
 
-  Future<void> _onLoadUserProgressByQuiz(
-    LoadUserProgressByQuiz event,
+  Future<void> _onLoadQuizProgress(
+    LoadQuizProgress event,
     Emitter<UserProgressState> emit,
   ) async {
     emit(const UserProgressLoading());
-    final result = await quizRepository.getUserProgressByQuizId(
-      event.userId,
-      event.quizId,
-    );
 
-    result.fold(
-      (error) => emit(UserProgressError(error)),
-      (progress) => emit(SingleUserProgressLoaded(progress)),
-    );
+    try {
+      final result = await _quizRepository.getUserProgressByQuizId(event.userId, event.quizId);
+      result.fold(
+        (failure) => emit(UserProgressError(failure.toString())),
+        (progress) => emit(QuizProgressLoaded(progress)),
+      );
+    } catch (e) {
+      emit(UserProgressError(e.toString()));
+    }
   }
 
   Future<void> _onSaveUserProgress(
@@ -46,11 +58,15 @@ class UserProgressBloc extends Bloc<UserProgressEvent, UserProgressState> {
     Emitter<UserProgressState> emit,
   ) async {
     emit(const UserProgressLoading());
-    final result = await quizRepository.saveUserProgress(event.progress);
 
-    result.fold(
-      (error) => emit(UserProgressError(error)),
-      (progressId) => emit(UserProgressSaved(progressId)),
-    );
+    try {
+      final result = await _quizRepository.saveUserProgress(event.progress);
+      result.fold(
+        (failure) => emit(UserProgressError(failure.toString())),
+        (_) => emit(UserProgressSaved(event.progress.id)),
+      );
+    } catch (e) {
+      emit(UserProgressError(e.toString()));
+    }
   }
 }

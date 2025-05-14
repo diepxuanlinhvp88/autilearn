@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyB4m2hv4GN0__-jT-uWCkBPNeCP4yc251g',
-    appId: '1:957482988455:web:abebad57fcaeb6e04cfc82',
-    messagingSenderId: '957482988455',
-    projectId: 'autilearn-21431',
-    authDomain: 'autilearn-21431.firebaseapp.com',
-    storageBucket: 'autilearn-21431.firebasestorage.app',
-    measurementId: 'G-ZJX8KKMLHJ',
+    apiKey: 'AIzaSyDgimaW-jCE7gYfU5m6YMnbr9qiLajN6lY',
+    appId: '1:705540150945:web:a9a002d5d7d6a0e1b382e0',
+    messagingSenderId: '705540150945',
+    projectId: 'autilearn-b095b',
+    authDomain: 'autilearn-b095b.firebaseapp.com',
+    storageBucket: 'autilearn-b095b.firebasestorage.app',
+    measurementId: 'G-56L9GM7ZRJ',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyByk5b5R9piGYw8c-29ixR9ygSUcWtr3h8',
-    appId: '1:957482988455:android:678875427952f4f04cfc82',
-    messagingSenderId: '957482988455',
-    projectId: 'autilearn-21431',
-    storageBucket: 'autilearn-21431.firebasestorage.app',
+    apiKey: 'AIzaSyAUS04Z_ezp9XkRHHDsCJ2Uwf0LxWCe4pg',
+    appId: '1:705540150945:android:f01ee2bcfbc37cf7b382e0',
+    messagingSenderId: '705540150945',
+    projectId: 'autilearn-b095b',
+    storageBucket: 'autilearn-b095b.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAmMaYNH72bXlR4hlFsh7QKViyp8uIR5wA',
-    appId: '1:957482988455:ios:9d63dd16af1f85484cfc82',
-    messagingSenderId: '957482988455',
-    projectId: 'autilearn-21431',
-    storageBucket: 'autilearn-21431.firebasestorage.app',
+    apiKey: 'AIzaSyCZBJNhD3vZVGjhOoX5jwxei8LYQKulqgM',
+    appId: '1:705540150945:ios:1adc2739db28cc79b382e0',
+    messagingSenderId: '705540150945',
+    projectId: 'autilearn-b095b',
+    storageBucket: 'autilearn-b095b.firebasestorage.app',
     iosBundleId: 'com.example.autilearn',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAmMaYNH72bXlR4hlFsh7QKViyp8uIR5wA',
-    appId: '1:957482988455:ios:9d63dd16af1f85484cfc82',
-    messagingSenderId: '957482988455',
-    projectId: 'autilearn-21431',
-    storageBucket: 'autilearn-21431.firebasestorage.app',
+    apiKey: 'AIzaSyCZBJNhD3vZVGjhOoX5jwxei8LYQKulqgM',
+    appId: '1:705540150945:ios:1adc2739db28cc79b382e0',
+    messagingSenderId: '705540150945',
+    projectId: 'autilearn-b095b',
+    storageBucket: 'autilearn-b095b.firebasestorage.app',
     iosBundleId: 'com.example.autilearn',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyB4m2hv4GN0__-jT-uWCkBPNeCP4yc251g',
-    appId: '1:957482988455:web:d1061967504f24cb4cfc82',
-    messagingSenderId: '957482988455',
-    projectId: 'autilearn-21431',
-    authDomain: 'autilearn-21431.firebaseapp.com',
-    storageBucket: 'autilearn-21431.firebasestorage.app',
-    measurementId: 'G-LK1Q9210GB',
+    apiKey: 'AIzaSyDgimaW-jCE7gYfU5m6YMnbr9qiLajN6lY',
+    appId: '1:705540150945:web:39ef39273e5c73b8b382e0',
+    messagingSenderId: '705540150945',
+    projectId: 'autilearn-b095b',
+    authDomain: 'autilearn-b095b.firebaseapp.com',
+    storageBucket: 'autilearn-b095b.firebasestorage.app',
+    measurementId: 'G-9CPBWDHG67',
   );
+
 }

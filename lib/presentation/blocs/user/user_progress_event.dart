@@ -17,11 +17,11 @@ class LoadUserProgress extends UserProgressEvent {
   List<Object?> get props => [userId];
 }
 
-class LoadUserProgressByQuiz extends UserProgressEvent {
+class LoadQuizProgress extends UserProgressEvent {
   final String userId;
   final String quizId;
 
-  const LoadUserProgressByQuiz({
+  const LoadQuizProgress({
     required this.userId,
     required this.quizId,
   });

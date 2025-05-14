@@ -22,6 +22,8 @@ import '../../../presentation/blocs/user/user_event.dart';
 import '../../../presentation/blocs/user/user_state.dart';
 import '../../../data/models/user_model.dart';
 import '../../../app/routes.dart';
+import '../../../presentation/widgets/common/user_avatar_with_badge.dart';
+import '../../../data/models/badge_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -76,12 +78,18 @@ class _HomePageState extends State<HomePage> {
             context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
             return Scaffold(
               appBar: AppBar(
-                title: const Text('AutiLearn'),
+                title: const Text('AutiLearn', style: TextStyle(fontWeight: FontWeight.bold)),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                elevation: 0,
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.logout),
+                    icon: const Icon(Icons.notifications),
                     onPressed: () {
-                      context.read<AuthBloc>().add(const SignOutRequested());
+                      // TODO: Implement notifications
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tính năng đang phát triển')),
+                      );
                     },
                   ),
                 ],
@@ -94,17 +102,25 @@ class _HomePageState extends State<HomePage> {
                     _selectedIndex = index;
                   });
                 },
+                selectedItemColor: Colors.blue,
+                unselectedItemColor: Colors.grey,
+                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                type: BottomNavigationBarType.fixed,
+                elevation: 10,
                 items: const [
                   BottomNavigationBarItem(
                     icon: Icon(Icons.home),
+                    activeIcon: Icon(Icons.home_filled),
                     label: 'Trang chủ',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.quiz),
+                    icon: Icon(Icons.quiz_outlined),
+                    activeIcon: Icon(Icons.quiz),
                     label: 'Bài học',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
+                    icon: Icon(Icons.person_outline),
+                    activeIcon: Icon(Icons.person),
                     label: 'Hồ sơ',
                   ),
                 ],
@@ -224,17 +240,22 @@ class _HomePageState extends State<HomePage> {
                       future: _getUserName(authState.user.uid),
                       builder: (context, snapshot) {
                         final displayName = snapshot.data ?? authState.user.displayName ?? 'A';
-                        return CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.blue.shade100,
-                          child: Text(
-                            displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
+                        return BlocBuilder<UserBloc, UserState>(
+                          builder: (context, userState) {
+                            if (userState is UserProfileLoaded) {
+                              return UserAvatarWithBadge(
+                                userId: authState.user.uid,
+                                displayName: displayName,
+                                radius: 30,
+                                currentBadge: userState.currentBadge,
+                              );
+                            }
+                            return UserAvatarWithBadge(
+                              userId: authState.user.uid,
+                              displayName: displayName,
+                              radius: 30,
+                            );
+                          },
                         );
                       },
                     ),
@@ -248,6 +269,9 @@ class _HomePageState extends State<HomePage> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 20),
+                // Khoảng trống thay cho phần tính năng đã bỏ
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -281,7 +305,6 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.check_circle,
                       color: Colors.blue,
                       onTap: () {
-                        // Truyền null để hiển thị tất cả bài học loại này
                         Navigator.of(context).pushNamed(AppRouter.choicesQuiz, arguments: null);
                       },
                     ),
@@ -290,7 +313,6 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.compare_arrows,
                       color: Colors.green,
                       onTap: () {
-                        // Truyền null để hiển thị tất cả bài học loại này
                         Navigator.of(context).pushNamed(AppRouter.pairingQuiz, arguments: null);
                       },
                     ),
@@ -299,7 +321,6 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.sort,
                       color: Colors.orange,
                       onTap: () {
-                        // Truyền null để hiển thị tất cả bài học loại này
                         Navigator.of(context).pushNamed(AppRouter.sequentialQuiz, arguments: null);
                       },
                     ),
@@ -308,100 +329,16 @@ class _HomePageState extends State<HomePage> {
                       icon: Icons.emoji_emotions,
                       color: Colors.purple,
                       onTap: () {
-                        // Truyền null để hiển thị tất cả bài học loại này
                         Navigator.of(context).pushNamed(AppRouter.emotionsQuiz, arguments: null);
                       },
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Phần thưởng và huy hiệu
-                Row(
-                  children: [
-                    Expanded(
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).pushNamed(AppRouter.badges);
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.emoji_events,
-                                    color: Colors.amber,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Huy hiệu',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).pushNamed(AppRouter.rewardShop);
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.card_giftcard,
-                                    color: Colors.green,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Cửa hàng',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                    _buildQuizTypeCardNew(
+                      title: 'Học vẽ',
+                      icon: Icons.brush,
+                      color: Colors.pink,
+                      onTap: () {
+                        Navigator.of(context).pushNamed(AppRouter.drawingHome);
+                      },
                     ),
                   ],
                 ),
@@ -418,8 +355,14 @@ class _HomePageState extends State<HomePage> {
                     }
 
                     if (userState is UserError) {
-                      print('Error getting user profile: ${userState.message}');
-                      return const SizedBox.shrink();
+                      print('Error getting user profile: ${userState.errorMessage}');
+                      return Text(
+                        'Error loading profile',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                        ),
+                      );
                     }
 
                     // Hiển thị công cụ giáo viên nếu là giáo viên hoặc phụ huynh
@@ -552,62 +495,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.of(context).pushNamed(AppRouter.assessments);
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.purple.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.assessment,
-                                        color: Colors.purple,
-                                        size: 32,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Đánh giá kỹ năng',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Theo dõi sự phát triển của trẻ',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey[600],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(Icons.arrow_forward_ios),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+
                           Card(
                             elevation: 4,
                             shape: RoundedRectangleBorder(
@@ -762,7 +650,7 @@ class _HomePageState extends State<HomePage> {
               child: CircularProgressIndicator(),
             );
           } else if (state is UserProgressLoaded) {
-            final progressList = state.progressList;
+            final progressList = state.progress;
 
             if (progressList.isEmpty) {
               return const Card(
@@ -818,7 +706,9 @@ class _HomePageState extends State<HomePage> {
                     }
 
                     final percentComplete = progress.score / progress.totalQuestions;
-                    final formattedDate = _formatDate(progress.completedAt);
+                    final formattedDate = progress.completedAt != null
+                        ? _formatDate(progress.completedAt!)
+                        : 'Chưa hoàn thành';
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
@@ -1340,85 +1230,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProfileTab(Authenticated authState) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircleAvatar(
-            radius: 50,
-            child: Icon(
-              Icons.person,
-              size: 50,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            authState.user.displayName ?? 'Người dùng',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            authState.user.email ?? '',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
+    // Sử dụng route profile thay vì hiển thị trực tiếp
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).pushReplacementNamed(AppRouter.profile);
+    });
 
-          // User role
-          BlocBuilder<UserBloc, UserState>(
-            builder: (context, userState) {
-              if (userState is UserInitial) {
-                context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
-                return const SizedBox.shrink();
-              }
-
-              if (userState is UserProfileLoaded) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getRoleIcon(userState.user.role),
-                        color: Colors.purple,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getRoleName(userState.user.role),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.purple,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return const SizedBox.shrink();
-            },
-          ),
-
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              context.read<AuthBloc>().add(const SignOutRequested());
-            },
-            child: const Text('Đăng xuất'),
-          ),
-        ],
-      ),
+    // Hiển thị màn hình loading trong khi chuyển hướng
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
 
@@ -1487,5 +1306,44 @@ class _HomePageState extends State<HomePage> {
       default:
         return Icons.person;
     }
+  }
+
+  Widget _buildFeatureCard({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 32,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

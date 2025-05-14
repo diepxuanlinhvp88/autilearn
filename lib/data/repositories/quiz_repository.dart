@@ -3,6 +3,7 @@ import '../datasources/firebase_datasource.dart';
 import '../models/quiz_model.dart';
 import '../models/question_model.dart';
 import '../models/user_progress_model.dart';
+import '../../core/error/failures.dart';
 
 class QuizRepository {
   final FirebaseDataSource _firebaseDataSource;
@@ -10,7 +11,7 @@ class QuizRepository {
   QuizRepository({required FirebaseDataSource firebaseDataSource})
       : _firebaseDataSource = firebaseDataSource;
 
-  Future<Either<String, List<QuizModel>>> getQuizzes({
+  Future<Either<Failure, List<QuizModel>>> getQuizzes({
     String? type,
     String? difficulty,
     String? category,
@@ -26,51 +27,51 @@ class QuizRepository {
     );
   }
 
-  Future<Either<String, QuizModel>> getQuizById(String quizId) async {
+  Future<Either<Failure, QuizModel>> getQuizById(String quizId) async {
     return _firebaseDataSource.getQuizById(quizId);
   }
 
-  Future<Either<String, String>> createQuiz(QuizModel quiz) async {
+  Future<Either<Failure, String>> createQuiz(QuizModel quiz) async {
     return _firebaseDataSource.createQuiz(quiz);
   }
 
-  Future<Either<String, bool>> updateQuiz(QuizModel quiz) async {
+  Future<Either<Failure, bool>> updateQuiz(QuizModel quiz) async {
     return _firebaseDataSource.updateQuiz(quiz);
   }
 
-  Future<Either<String, bool>> deleteQuiz(String quizId) async {
+  Future<Either<Failure, bool>> deleteQuiz(String quizId) async {
     return _firebaseDataSource.deleteQuiz(quizId);
   }
 
-  Future<Either<String, List<QuestionModel>>> getQuestionsByQuizId(String quizId) async {
+  Future<Either<Failure, List<QuestionModel>>> getQuestionsByQuizId(String quizId) async {
     return _firebaseDataSource.getQuestionsByQuizId(quizId);
   }
 
-  Future<Either<String, QuestionModel>> getQuestionById(String questionId) async {
+  Future<Either<Failure, QuestionModel>> getQuestionById(String questionId) async {
     return _firebaseDataSource.getQuestionById(questionId);
   }
 
-  Future<Either<String, String>> createQuestion(QuestionModel question) async {
+  Future<Either<Failure, String>> createQuestion(QuestionModel question) async {
     return _firebaseDataSource.createQuestion(question);
   }
 
-  Future<Either<String, bool>> updateQuestion(QuestionModel question) async {
+  Future<Either<Failure, bool>> updateQuestion(QuestionModel question) async {
     return _firebaseDataSource.updateQuestion(question);
   }
 
-  Future<Either<String, bool>> deleteQuestion(String questionId) async {
+  Future<Either<Failure, bool>> deleteQuestion(String questionId) async {
     return _firebaseDataSource.deleteQuestion(questionId);
   }
 
-  Future<Either<String, List<UserProgressModel>>> getUserProgressByUserId(String userId) async {
+  Future<Either<Failure, List<UserProgressModel>>> getUserProgressByUserId(String userId) async {
     return _firebaseDataSource.getUserProgressByUserId(userId);
   }
 
-  Future<Either<String, UserProgressModel>> getUserProgressByQuizId(String userId, String quizId) async {
+  Future<Either<Failure, UserProgressModel>> getUserProgressByQuizId(String userId, String quizId) async {
     return _firebaseDataSource.getUserProgressByQuizId(userId, quizId);
   }
 
-  Future<Either<String, String>> saveUserProgress(UserProgressModel progress) async {
+  Future<Either<Failure, String>> saveUserProgress(UserProgressModel progress) async {
     return _firebaseDataSource.saveUserProgress(progress);
   }
 }

@@ -43,11 +43,20 @@ class _ProfilePageState extends State<ProfilePage> {
             context.read<UserBloc>().add(LoadUserProfile(state.user.uid));
             return Scaffold(
               appBar: AppBar(
-                title: const Text('Hồ sơ của tôi'),
+                title: const Text('Hồ sơ của tôi', style: TextStyle(fontWeight: FontWeight.bold)),
                 backgroundColor: Colors.purple,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      // TODO: Implement settings page
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tính năng đang phát triển')),
+                      );
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.logout),
                     onPressed: () {
@@ -182,8 +191,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               }
 
                               if (userState is UserError) {
-                                print('Error getting user profile: ${userState.message}');
-                                return Text('Error: ${userState.message}', style: const TextStyle(color: Colors.white));
+                                print('Error getting user profile: ${userState.errorMessage}');
+                                return Text('Error: ${userState.errorMessage}', style: const TextStyle(color: Colors.white));
                               }
 
                               String role = AppConstants.roleStudent;
@@ -238,12 +247,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         int createdQuizCount = 0;
                         int publishedQuizCount = 0;
                         int totalQuestions = 0;
+                        int choicesQuizCount = 0;
+                        int pairingQuizCount = 0;
+                        int sequentialQuizCount = 0;
 
                         // Update with actual values if available
                         if (userState is UserStatsLoaded) {
                           createdQuizCount = userState.createdQuizCount;
                           publishedQuizCount = userState.publishedQuizCount;
                           totalQuestions = userState.totalQuestions;
+                          choicesQuizCount = userState.choicesQuizCount;
+                          pairingQuizCount = userState.pairingQuizCount;
+                          sequentialQuizCount = userState.sequentialQuizCount;
                         }
 
                         // Get user role to determine which stats to show
@@ -265,7 +280,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              if (role == AppConstants.roleStudent)
+                              if (role == AppConstants.roleStudent) ...[
                                 // Student stats
                                 Row(
                                   children: [
@@ -281,6 +296,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       color: Colors.orange,
                                       title: 'Huy hiệu',
                                       value: '5',
+                                      onTap: () {
+                                        Navigator.of(context).pushNamed(AppRouter.badges);
+                                      },
                                     ),
                                     const SizedBox(width: 16),
                                     _buildStatCard(
@@ -290,7 +308,32 @@ class _ProfilePageState extends State<ProfilePage> {
                                       value: '12',
                                     ),
                                   ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    _buildStatCard(
+                                      icon: Icons.brush,
+                                      color: Colors.blue,
+                                      title: 'Vẽ',
+                                      value: 'Tạo',
+                                      onTap: () {
+                                        Navigator.of(context).pushNamed(AppRouter.drawingHome);
+                                      },
+                                    ),
+                                    const SizedBox(width: 16),
+                                    _buildStatCard(
+                                      icon: Icons.school,
+                                      color: Colors.orange,
+                                      title: 'Tiến độ',
+                                      value: 'Xem',
+                                      onTap: () {
+                                        Navigator.of(context).pushNamed(AppRouter.progress);
+                                      },
+                                    ),
+                                  ],
                                 )
+                              ]
                               else
                                 // Teacher/Parent stats
                                 Row(
@@ -365,15 +408,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                         Navigator.of(context).pushNamed(AppRouter.teacherAnalytics);
                                       },
                                     ),
-                                  if (role == AppConstants.roleTeacher || role == AppConstants.roleParent)
+                                  if (role == AppConstants.roleTeacher)
                                     _buildMenuCard(
-                                      icon: Icons.assessment,
-                                      title: 'Đánh giá kỹ năng',
-                                      subtitle: 'Tạo và quản lý đánh giá kỹ năng',
+                                      icon: Icons.people,
+                                      title: 'Quản lý học sinh',
+                                      subtitle: 'Xem và quản lý danh sách học sinh',
                                       onTap: () {
-                                        Navigator.of(context).pushNamed(AppRouter.assessments);
+                                        Navigator.of(context).pushNamed(AppRouter.manageStudents);
                                       },
                                     ),
+                                  // Đã bỏ tính năng đánh giá kỹ năng
                                   if (role == AppConstants.roleTeacher || role == AppConstants.roleParent)
                                     _buildMenuCard(
                                       icon: Icons.calendar_today,
@@ -395,6 +439,24 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                   const SizedBox(height: 12),
                                   _buildMenuCard(
+                                    icon: Icons.shopping_cart,
+                                    title: 'Cửa hàng',
+                                    subtitle: 'Mua sắm phần thưởng và vật phẩm',
+                                    onTap: () {
+                                      Navigator.of(context).pushNamed(AppRouter.rewardShop);
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildMenuCard(
+                                    icon: Icons.analytics,
+                                    title: 'Phân tích học tập',
+                                    subtitle: 'Xem tiến độ và kết quả học tập',
+                                    onTap: () {
+                                      Navigator.of(context).pushNamed(AppRouter.studentAnalytics);
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildMenuCard(
                                     icon: Icons.insights,
                                     title: 'Tiến trình học tập',
                                     subtitle: 'Xem quá trình học tập của bạn',
@@ -406,34 +468,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               );
                             },
                           ),
+
+                          // Đã bỏ tính năng đánh giá kỹ năng
                           const SizedBox(height: 12),
-                          _buildMenuCard(
-                            icon: Icons.shopping_cart,
-                            title: 'Cửa hàng phần thưởng',
-                            subtitle: 'Mua phần thưởng bằng xu',
-                            onTap: () {
-                              Navigator.of(context).pushNamed(AppRouter.rewardShop);
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildMenuCard(
-                            icon: Icons.analytics,
-                            title: 'Phân tích học tập',
-                            subtitle: 'Xem tiến độ và hiệu suất học tập',
-                            onTap: () {
-                              Navigator.of(context).pushNamed(AppRouter.studentAnalytics);
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildMenuCard(
-                            icon: Icons.assessment,
-                            title: 'Đánh giá kỹ năng',
-                            subtitle: 'Xem đánh giá kỹ năng của bạn',
-                            onTap: () {
-                              Navigator.of(context).pushNamed(AppRouter.assessments);
-                            },
-                          ),
-                          const SizedBox(height: 16),
                           _buildMenuCard(
                             icon: Icons.calendar_today,
                             title: 'Lịch học',
@@ -489,45 +526,58 @@ class _ProfilePageState extends State<ProfilePage> {
     required Color color,
     required String title,
     required String value,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: color,
-              size: 32,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+            ],
+            border: onTap != null ? Border.all(color: color.withOpacity(0.3), width: 2) : null,
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 32,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(height: 4),
+                Icon(
+                  Icons.arrow_forward,
+                  color: color.withOpacity(0.5),
+                  size: 16,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

@@ -6,54 +6,61 @@ class QuizModel extends Equatable {
   final String title;
   final String description;
   final String type; // 'choices', 'pairing', 'sequential'
-  final String creatorId;
-  final String? imageUrl;
+  final String category;
   final String difficulty; // 'easy', 'medium', 'hard'
-  final List<String> tags;
+  final String creatorId;
   final bool isPublished;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final bool isCompleted;
   final int questionCount;
-  final String? category;
+  final double? score;
   final int ageRangeMin;
   final int ageRangeMax;
+  final String? imageUrl;
+  final List<String> tags;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const QuizModel({
     required this.id,
     required this.title,
     required this.description,
     required this.type,
-    required this.creatorId,
-    this.imageUrl,
+    required this.category,
     required this.difficulty,
-    required this.tags,
+    required this.creatorId,
     required this.isPublished,
-    required this.createdAt,
-    required this.updatedAt,
+    this.isCompleted = false,
     required this.questionCount,
-    this.category,
+    this.score,
     required this.ageRangeMin,
     required this.ageRangeMax,
+    this.imageUrl,
+    this.tags = const [],
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory QuizModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
     return QuizModel(
       id: doc.id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       type: data['type'] ?? '',
-      creatorId: data['creatorId'] ?? '',
-      imageUrl: data['imageUrl'],
+      category: data['category'] ?? '',
       difficulty: data['difficulty'] ?? '',
-      tags: List<String>.from(data['tags'] ?? []),
+      creatorId: data['creatorId'] ?? '',
       isPublished: data['isPublished'] ?? false,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      isCompleted: data['isCompleted'] ?? false,
       questionCount: data['questionCount'] ?? 0,
-      category: data['category'],
-      ageRangeMin: data['ageRangeMin'] ?? 3,
-      ageRangeMax: data['ageRangeMax'] ?? 12,
+      score: data['score']?.toDouble(),
+      ageRangeMin: data['ageRangeMin'] ?? 0,
+      ageRangeMax: data['ageRangeMax'] ?? 0,
+      imageUrl: data['imageUrl'],
+      tags: List<String>.from(data['tags'] ?? []),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
@@ -62,17 +69,19 @@ class QuizModel extends Equatable {
       'title': title,
       'description': description,
       'type': type,
-      'creatorId': creatorId,
-      'imageUrl': imageUrl,
-      'difficulty': difficulty,
-      'tags': tags,
-      'isPublished': isPublished,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
-      'questionCount': questionCount,
       'category': category,
+      'difficulty': difficulty,
+      'creatorId': creatorId,
+      'isPublished': isPublished,
+      'isCompleted': isCompleted,
+      'questionCount': questionCount,
+      'score': score,
       'ageRangeMin': ageRangeMin,
       'ageRangeMax': ageRangeMax,
+      'imageUrl': imageUrl,
+      'tags': tags,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 
@@ -81,34 +90,38 @@ class QuizModel extends Equatable {
     String? title,
     String? description,
     String? type,
-    String? creatorId,
-    String? imageUrl,
-    String? difficulty,
-    List<String>? tags,
-    bool? isPublished,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    int? questionCount,
     String? category,
+    String? difficulty,
+    String? creatorId,
+    bool? isPublished,
+    bool? isCompleted,
+    int? questionCount,
+    double? score,
     int? ageRangeMin,
     int? ageRangeMax,
+    String? imageUrl,
+    List<String>? tags,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return QuizModel(
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       type: type ?? this.type,
-      creatorId: creatorId ?? this.creatorId,
-      imageUrl: imageUrl ?? this.imageUrl,
-      difficulty: difficulty ?? this.difficulty,
-      tags: tags ?? this.tags,
-      isPublished: isPublished ?? this.isPublished,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      questionCount: questionCount ?? this.questionCount,
       category: category ?? this.category,
+      difficulty: difficulty ?? this.difficulty,
+      creatorId: creatorId ?? this.creatorId,
+      isPublished: isPublished ?? this.isPublished,
+      isCompleted: isCompleted ?? this.isCompleted,
+      questionCount: questionCount ?? this.questionCount,
+      score: score ?? this.score,
       ageRangeMin: ageRangeMin ?? this.ageRangeMin,
       ageRangeMax: ageRangeMax ?? this.ageRangeMax,
+      imageUrl: imageUrl ?? this.imageUrl,
+      tags: tags ?? this.tags,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -118,16 +131,18 @@ class QuizModel extends Equatable {
         title,
         description,
         type,
-        creatorId,
-        imageUrl,
-        difficulty,
-        tags,
-        isPublished,
-        createdAt,
-        updatedAt,
-        questionCount,
         category,
+        difficulty,
+        creatorId,
+        isPublished,
+        isCompleted,
+        questionCount,
+        score,
         ageRangeMin,
         ageRangeMax,
+        imageUrl,
+        tags,
+        createdAt,
+        updatedAt,
       ];
 }

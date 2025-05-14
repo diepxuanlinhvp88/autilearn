@@ -9,13 +9,9 @@ abstract class QuizState extends Equatable {
   List<Object?> get props => [];
 }
 
-class QuizInitial extends QuizState {
-  const QuizInitial();
-}
+class QuizInitial extends QuizState {}
 
-class QuizLoading extends QuizState {
-  const QuizLoading();
-}
+class QuizLoading extends QuizState {}
 
 class QuizzesLoaded extends QuizState {
   final List<QuizModel> quizzes;
@@ -24,6 +20,33 @@ class QuizzesLoaded extends QuizState {
 
   @override
   List<Object?> get props => [quizzes];
+}
+
+class QuizCreated extends QuizState {
+  final QuizModel quiz;
+
+  const QuizCreated(this.quiz);
+
+  @override
+  List<Object?> get props => [quiz];
+}
+
+class QuizUpdated extends QuizState {
+  final QuizModel quiz;
+
+  const QuizUpdated(this.quiz);
+
+  @override
+  List<Object?> get props => [quiz];
+}
+
+class QuizDeleted extends QuizState {
+  final String quizId;
+
+  const QuizDeleted(this.quizId);
+
+  @override
+  List<Object?> get props => [quizId];
 }
 
 class QuizLoaded extends QuizState {

@@ -24,6 +24,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
   String _title = '';
   String _description = '';
   String _type = 'choices_quiz';
+  String _category = 'general';
   int _difficulty = 1;
   String _imageUrl = '';
 
@@ -36,7 +37,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
         context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
       }
     }
-    
+
     return BlocProvider<QuizBloc>(
       create: (context) => getIt<QuizBloc>(),
       child: Scaffold(
@@ -74,14 +75,14 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              
+
               // Chuyển đến trang danh sách câu hỏi
               Navigator.of(context).pushReplacementNamed(
                 AppRouter.questionList,
                 arguments: {
-                  'quizId': state.quizId,
-                  'quizTitle': _title,
-                  'quizType': _type,
+                  'quizId': state.quiz.id,
+                  'quizTitle': state.quiz.title,
+                  'quizType': state.quiz.type,
                 },
               );
             }
@@ -92,7 +93,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                 child: CircularProgressIndicator(),
               );
             }
-            
+
             return Form(
               key: _formKey,
               child: SingleChildScrollView(
@@ -182,6 +183,74 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                         if (value != null) {
                           setState(() {
                             _type = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Danh mục',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.folder),
+                      ),
+                      value: _category,
+                      items: [
+                        DropdownMenuItem<String>(
+                          value: 'general',
+                          child: Row(
+                            children: [
+                              Icon(Icons.book, color: Colors.blue.shade700),
+                              const SizedBox(width: 8),
+                              const Text('Chung'),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'math',
+                          child: Row(
+                            children: [
+                              Icon(Icons.calculate, color: Colors.green.shade700),
+                              const SizedBox(width: 8),
+                              const Text('Toán học'),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'language',
+                          child: Row(
+                            children: [
+                              Icon(Icons.language, color: Colors.orange.shade700),
+                              const SizedBox(width: 8),
+                              const Text('Ngôn ngữ'),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'science',
+                          child: Row(
+                            children: [
+                              Icon(Icons.science, color: Colors.purple.shade700),
+                              const SizedBox(width: 8),
+                              const Text('Khoa học'),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: 'social',
+                          child: Row(
+                            children: [
+                              Icon(Icons.people, color: Colors.red.shade700),
+                              const SizedBox(width: 8),
+                              const Text('Kỹ năng xã hội'),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _category = value;
                           });
                         }
                       },
@@ -279,20 +348,25 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
       final authState = context.read<AuthBloc>().state;
       if (authState is Authenticated) {
         final userId = authState.user.uid;
-        
+
         final quiz = QuizModel(
           id: '', // ID sẽ được tạo bởi Firebase
           title: _title,
           description: _description,
           type: _type,
-          difficulty: _difficulty,
+          category: _category,
+          difficulty: _difficulty.toString(),
           imageUrl: _imageUrl,
-          authorId: userId,
-          questionCount: 0,
+          creatorId: userId,
+          tags: [], // Thêm tags nếu cần
+          isPublished: false, // Mặc định là chưa xuất bản
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
+          questionCount: 0,
+          ageRangeMin: 3, // Mặc định từ 3 tuổi
+          ageRangeMax: 12, // Mặc định đến 12 tuổi
         );
-        
+
         context.read<QuizBloc>().add(CreateQuiz(quiz));
       }
     }

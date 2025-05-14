@@ -18,9 +18,23 @@ class LoadUserProfile extends UserEvent {
 
 class LoadUserStats extends UserEvent {
   final String userId;
+  final int points;
 
-  const LoadUserStats(this.userId);
+  const LoadUserStats(this.userId, {this.points = 0});
 
   @override
-  List<Object?> get props => [userId];
+  List<Object?> get props => [userId, points];
+}
+
+class UpdateUserPoints extends UserEvent {
+  final String userId;
+  final int newPoints;
+
+  const UpdateUserPoints({
+    required this.userId,
+    required this.newPoints,
+  });
+
+  @override
+  List<Object?> get props => [userId, newPoints];
 }

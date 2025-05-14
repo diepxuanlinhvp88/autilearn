@@ -7,6 +7,7 @@ class UserModel extends Equatable {
   final String email;
   final String role; // 'parent', 'teacher', 'student'
   final String? avatarUrl;
+  final String? currentBadgeId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -16,6 +17,7 @@ class UserModel extends Equatable {
     required this.email,
     required this.role,
     this.avatarUrl,
+    this.currentBadgeId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -34,6 +36,7 @@ class UserModel extends Equatable {
       email: data['email'] ?? '',
       role: role,
       avatarUrl: data['avatarUrl'],
+      currentBadgeId: data['currentBadgeId'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
@@ -45,6 +48,7 @@ class UserModel extends Equatable {
       'email': email,
       'role': role,
       'avatarUrl': avatarUrl,
+      'currentBadgeId': currentBadgeId,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -58,6 +62,7 @@ class UserModel extends Equatable {
     String? email,
     String? role,
     String? avatarUrl,
+    String? currentBadgeId,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -67,11 +72,34 @@ class UserModel extends Equatable {
       email: email ?? this.email,
       role: role ?? this.role,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      currentBadgeId: currentBadgeId ?? this.currentBadgeId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
+  factory UserModel.fromMap(String id, Map<String, dynamic> map) {
+    return UserModel(
+      id: id,
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      role: map['role'] ?? '',
+      avatarUrl: map['avatarUrl'],
+      currentBadgeId: map['currentBadgeId'],
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      updatedAt: (map['updatedAt'] as Timestamp).toDate(),
+    );
+  }
+
   @override
-  List<Object?> get props => [id, name, email, role, avatarUrl, createdAt, updatedAt];
+  List<Object?> get props => [
+    id,
+    name,
+    email,
+    role,
+    avatarUrl,
+    currentBadgeId,
+    createdAt,
+    updatedAt,
+  ];
 }

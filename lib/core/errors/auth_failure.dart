@@ -1,17 +1,29 @@
 import 'package:equatable/equatable.dart';
 
-class AuthFailure extends Equatable {
+abstract class AuthFailure extends Equatable {
   final String message;
 
-  const AuthFailure._(this.message);
-
-  factory AuthFailure.serverError() => const AuthFailure._('Server error occurred');
-  factory AuthFailure.userNotFound() => const AuthFailure._('User not found');
-  factory AuthFailure.wrongPassword() => const AuthFailure._('Wrong password');
-  factory AuthFailure.emailAlreadyInUse() => const AuthFailure._('Email already in use');
-  factory AuthFailure.weakPassword() => const AuthFailure._('Password is too weak');
-  factory AuthFailure.invalidEmail() => const AuthFailure._('Invalid email');
+  const AuthFailure(this.message);
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
+
+  @override
+  String toString() => message;
+}
+
+class ServerFailure extends AuthFailure {
+  const ServerFailure(String message) : super(message);
+}
+
+class CacheFailure extends AuthFailure {
+  const CacheFailure(String message) : super(message);
+}
+
+class NetworkFailure extends AuthFailure {
+  const NetworkFailure(String message) : super(message);
+}
+
+class ValidationFailure extends AuthFailure {
+  const ValidationFailure(String message) : super(message);
 }

@@ -366,7 +366,7 @@ class _CreateQuizPageState extends State<CreateQuizPage> {
                                           createdAt: DateTime.now(),
                                           updatedAt: DateTime.now(),
                                           questionCount: 0,
-                                          category: _category,
+                                          category: _category ?? 'Chung',
                                           ageRangeMin: _minAge,
                                           ageRangeMax: _maxAge,
                                         );

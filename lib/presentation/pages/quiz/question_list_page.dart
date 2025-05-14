@@ -33,7 +33,7 @@ class QuestionListPage extends StatelessWidget {
         context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
       }
     }
-    
+
     return BlocProvider<QuestionBloc>(
       create: (context) => getIt<QuestionBloc>(),
       child: Scaffold(
@@ -73,7 +73,7 @@ class QuestionListPage extends StatelessWidget {
                   backgroundColor: Colors.green,
                 ),
               );
-              
+
               // Tải lại danh sách câu hỏi
               context.read<QuestionBloc>().add(LoadQuestions(quizId));
             }
@@ -91,7 +91,7 @@ class QuestionListPage extends StatelessWidget {
               );
             } else if (state is QuestionsLoaded) {
               final questions = state.questions;
-              
+
               if (questions.isEmpty) {
                 return Center(
                   child: Column(
@@ -127,10 +127,10 @@ class QuestionListPage extends StatelessWidget {
                   ),
                 );
               }
-              
+
               // Sắp xếp câu hỏi theo thứ tự
               questions.sort((a, b) => a.order.compareTo(b.order));
-              
+
               return ReorderableListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: questions.length,
@@ -138,16 +138,16 @@ class QuestionListPage extends StatelessWidget {
                   if (oldIndex < newIndex) {
                     newIndex -= 1;
                   }
-                  
+
                   final List<QuestionModel> updatedQuestions = List.from(questions);
                   final item = updatedQuestions.removeAt(oldIndex);
                   updatedQuestions.insert(newIndex, item);
-                  
+
                   // Cập nhật thứ tự
                   for (int i = 0; i < updatedQuestions.length; i++) {
                     updatedQuestions[i] = updatedQuestions[i].copyWith(order: i);
                   }
-                  
+
                   // Lưu thứ tự mới
                   context.read<QuestionBloc>().add(UpdateQuestionsOrder(updatedQuestions));
                 },
@@ -260,12 +260,12 @@ class QuestionListPage extends StatelessWidget {
                   ),
                 ],
               ),
-              if (question.imageUrl.isNotEmpty) ...[
+              if (question.imageUrl != null && question.imageUrl!.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    question.imageUrl,
+                    question.imageUrl!,
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -308,8 +308,8 @@ class QuestionListPage extends StatelessWidget {
             ...question.options.asMap().entries.map((entry) {
               final index = entry.key;
               final option = entry.value;
-              final isCorrect = question.correctOptionIndex == index;
-              
+              final isCorrect = question.correctOptionId == option.id;
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -344,7 +344,7 @@ class QuestionListPage extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        option,
+                        option.text,
                         style: TextStyle(
                           fontSize: 14,
                           color: isCorrect ? Colors.green : Colors.black,
@@ -359,75 +359,96 @@ class QuestionListPage extends StatelessWidget {
           ],
         );
       case 'pairing_quiz':
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Các cặp ghép đôi:',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...question.pairs.asMap().entries.map((entry) {
-              final index = entry.key;
-              final pair = entry.value;
-              
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.blue,
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: const TextStyle(
-                            fontSize: 12,
+        {
+          // Tạo danh sách các cặp ghép đôi từ correctPairs
+          final pairWidgets = <Widget>[];
+
+          if (question.correctPairs != null) {
+            int i = 0;
+            for (var entry in question.correctPairs!.entries) {
+              final leftId = entry.key;
+              final rightId = entry.value;
+              final leftOption = question.options.firstWhere(
+                (option) => option.id == leftId,
+                orElse: () => const AnswerOption(id: '', text: 'Unknown'),
+              );
+              final rightOption = question.options.firstWhere(
+                (option) => option.id == rightId,
+                orElse: () => const AnswerOption(id: '', text: 'Unknown'),
+              );
+
+              pairWidgets.add(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
                             color: Colors.blue,
+                            width: 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${i + 1}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        pair.first,
-                        style: const TextStyle(
-                          fontSize: 14,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          leftOption.text,
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward,
-                      size: 16,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        pair.second,
-                        style: const TextStyle(
-                          fontSize: 14,
+                      const Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          rightOption.text,
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
-            }).toList(),
-          ],
-        );
+              i++;
+            }
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Các cặp ghép đôi:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...pairWidgets,
+            ],
+          );
+        }
       case 'sequential_quiz':
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,10 +461,10 @@ class QuestionListPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...question.sequence.asMap().entries.map((entry) {
+            ...(question.correctSequence ?? []).asMap().entries.map((entry) {
               final index = entry.key;
               final item = entry.value;
-              
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -509,7 +530,10 @@ class QuestionListPage extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    question.emotion,
+                    question.correctOptionId != null ? question.options.firstWhere(
+                      (option) => option.id == question.correctOptionId,
+                      orElse: () => const AnswerOption(id: '', text: 'Không xác định'),
+                    ).text : 'Không xác định',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.purple,
@@ -542,7 +566,7 @@ class QuestionListPage extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<QuestionBloc>().add(DeleteQuestion(questionId, quizId));
+              context.read<QuestionBloc>().add(DeleteQuestion(questionId));
             },
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,

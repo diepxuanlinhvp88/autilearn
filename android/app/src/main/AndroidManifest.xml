@@ -56,7 +56,7 @@
         <!-- Add this for Firebase Auth reCAPTCHA verification -->
         <meta-data
             android:name="firebase_auth_recaptcha_enabled"
-            android:value="true" />
+            android:value="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

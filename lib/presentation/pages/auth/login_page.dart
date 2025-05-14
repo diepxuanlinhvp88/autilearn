@@ -52,15 +52,6 @@ class _LoginPageState extends State<LoginPage> {
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is Authenticated) {
-              // Đảm bảo người dùng có trong Firestore
-              print('LoginPage: Ensuring user exists in Firestore');
-              context.read<AuthBloc>().add(EnsureUserInFirestore(
-                    userId: state.user.uid,
-                    name: state.user.displayName,
-                    email: state.user.email,
-                    role: AppConstants.roleTeacher, // Mặc định là giáo viên
-                  ));
-
               Navigator.of(context).pushReplacementNamed(AppRouter.home);
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -226,11 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Tính năng đang phát triển'),
-                                    ),
-                                  );
+                                  Navigator.of(context).pushNamed(AppRouter.forgotPassword);
                                 },
                                 child: const Text('Quên mật khẩu?'),
                               ),

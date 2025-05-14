@@ -37,8 +37,8 @@ class _EditQuizPageState extends State<EditQuizPage> {
     _title = widget.quiz.title;
     _description = widget.quiz.description;
     _type = widget.quiz.type;
-    _difficulty = widget.quiz.difficulty;
-    _imageUrl = widget.quiz.imageUrl;
+    _difficulty = widget.quiz.difficulty as int;
+    _imageUrl = widget.quiz.imageUrl!;
   }
 
   @override
@@ -289,7 +289,7 @@ class _EditQuizPageState extends State<EditQuizPage> {
         title: _title,
         description: _description,
         type: _type,
-        difficulty: _difficulty,
+        difficulty: _difficulty.toString(),
         imageUrl: _imageUrl,
         updatedAt: DateTime.now(),
       );

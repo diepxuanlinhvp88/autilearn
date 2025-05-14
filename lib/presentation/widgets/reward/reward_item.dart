@@ -22,6 +22,7 @@ class RewardItem extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 120,
+        height: showDetails ? 250 : 180,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -40,6 +41,8 @@ class RewardItem extends StatelessWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Reward image
             Stack(
@@ -135,7 +138,7 @@ class RewardItem extends StatelessWidget {
                 color: reward.isPurchased ? Colors.black : Colors.grey,
               ),
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             if (showDetails) ...[
@@ -148,7 +151,7 @@ class RewardItem extends StatelessWidget {
                   color: reward.isPurchased ? Colors.grey : Colors.grey.shade400,
                 ),
                 textAlign: TextAlign.center,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),

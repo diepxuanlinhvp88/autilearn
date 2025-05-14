@@ -1,5 +1,7 @@
 import 'dart:math' as Math;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../../../data/models/quiz_model.dart';
 import '../../../data/repositories/quiz_repository.dart';
 import 'quiz_event.dart';
 import 'quiz_state.dart';
@@ -7,7 +9,7 @@ import 'quiz_state.dart';
 class QuizBloc extends Bloc<QuizEvent, QuizState> {
   final QuizRepository quizRepository;
 
-  QuizBloc({required this.quizRepository}) : super(const QuizInitial()) {
+  QuizBloc({required this.quizRepository}) : super(QuizInitial()) {
     on<LoadQuizzes>(_onLoadQuizzes);
     on<LoadQuizById>(_onLoadQuizById);
     on<CreateQuiz>(_onCreateQuiz);
@@ -19,82 +21,109 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     on<DeleteQuestion>(_onDeleteQuestion);
   }
 
-  Future<void> _onLoadQuizzes(
-    LoadQuizzes event,
-    Emitter<QuizState> emit,
-  ) async {
-    emit(const QuizLoading());
-    final result = await quizRepository.getQuizzes(
-      type: event.type,
-      difficulty: event.difficulty,
-      category: event.category,
-      isPublished: event.isPublished,
-      creatorId: event.creatorId,
-    );
-
-    result.fold(
-      (error) => emit(QuizError(error)),
-      (quizzes) => emit(QuizzesLoaded(quizzes)),
-    );
+  Future<void> _onLoadQuizzes(LoadQuizzes event, Emitter<QuizState> emit) async {
+    emit(QuizLoading());
+    try {
+      final result = await quizRepository.getQuizzes(
+        isPublished: event.isPublished,
+        creatorId: event.creatorId,
+      );
+      result.fold(
+        (error) => emit(QuizError(error.toString())),
+        (quizzes) => emit(QuizzesLoaded(quizzes)),
+      );
+    } catch (e) {
+      emit(QuizError(e.toString()));
+    }
   }
 
   Future<void> _onLoadQuizById(
     LoadQuizById event,
     Emitter<QuizState> emit,
   ) async {
-    emit(const QuizLoading());
+    emit(QuizLoading());
     final result = await quizRepository.getQuizById(event.quizId);
 
     result.fold(
-      (error) => emit(QuizError(error)),
+      (error) => emit(QuizError(error.toString())),
       (quiz) => emit(QuizLoaded(quiz)),
     );
   }
 
-  Future<void> _onCreateQuiz(
-    CreateQuiz event,
-    Emitter<QuizState> emit,
-  ) async {
-    emit(const QuizLoading());
-    final result = await quizRepository.createQuiz(event.quiz);
-
-    result.fold(
-      (error) => emit(QuizError(error)),
-      (quizId) => emit(QuizOperationSuccess('Quiz created successfully', data: quizId)),
-    );
+  Future<void> _onCreateQuiz(CreateQuiz event, Emitter<QuizState> emit) async {
+    emit(QuizLoading());
+    try {
+      // 1. Create quiz and get ID
+      final result = await quizRepository.createQuiz(event.quiz);
+      
+      await result.fold(
+        (error) async {
+          emit(QuizError(error.toString()));
+          return null;
+        },
+        (quizId) async {
+          // 2. Get the created quiz
+          final quizResult = await quizRepository.getQuizById(quizId);
+          
+          return quizResult.fold(
+            (error) => emit(QuizError(error.toString())),
+            (quiz) => emit(QuizCreated(quiz)),
+          );
+        },
+      );
+    } catch (e) {
+      emit(QuizError(e.toString()));
+    }
   }
 
-  Future<void> _onUpdateQuiz(
-    UpdateQuiz event,
-    Emitter<QuizState> emit,
-  ) async {
-    emit(const QuizLoading());
-    final result = await quizRepository.updateQuiz(event.quiz);
-
-    result.fold(
-      (error) => emit(QuizError(error)),
-      (success) => emit(QuizOperationSuccess('Quiz updated successfully')),
-    );
+  Future<void> _onUpdateQuiz(UpdateQuiz event, Emitter<QuizState> emit) async {
+    emit(QuizLoading());
+    try {
+      // 1. Update quiz
+      final result = await quizRepository.updateQuiz(event.quiz);
+      
+      await result.fold(
+        (error) async {
+          emit(QuizError(error.toString()));
+          return null;
+        },
+        (success) async {
+          if (success) {
+            // 2. Get the updated quiz
+            final quizResult = await quizRepository.getQuizById(event.quiz.id);
+            
+            return quizResult.fold(
+              (error) => emit(QuizError(error.toString())),
+              (quiz) => emit(QuizUpdated(quiz)),
+            );
+          } else {
+            emit(QuizError('Failed to update quiz'));
+          }
+        },
+      );
+    } catch (e) {
+      emit(QuizError(e.toString()));
+    }
   }
 
-  Future<void> _onDeleteQuiz(
-    DeleteQuiz event,
-    Emitter<QuizState> emit,
-  ) async {
-    emit(const QuizLoading());
-    final result = await quizRepository.deleteQuiz(event.quizId);
-
-    result.fold(
-      (error) => emit(QuizError(error)),
-      (success) => emit(QuizOperationSuccess('Quiz deleted successfully')),
-    );
+  Future<void> _onDeleteQuiz(DeleteQuiz event, Emitter<QuizState> emit) async {
+    emit(QuizLoading());
+    try {
+      final result = await quizRepository.deleteQuiz(event.quizId);
+      result.fold(
+        (error) => emit(QuizError(error.toString())),
+        (_) => emit(QuizDeleted(event.quizId)),
+      );
+    } catch (e) {
+      emit(QuizError(e.toString()));
+    }
   }
 
   Future<void> _onLoadQuestions(
     LoadQuestions event,
     Emitter<QuizState> emit,
   ) async {
-    emit(const QuizLoading());
+    emit(QuizLoading());
     print('Loading questions for quiz ID: ${event.quizId}');
 
     // 1. Get questions
@@ -103,7 +132,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     await result.fold(
       (error) async {
         print('Error loading questions: $error');
-        emit(QuizError(error));
+        emit(QuizError(error.toString()));
         return null;
       },
       (questions) async {
@@ -145,7 +174,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     CreateQuestion event,
     Emitter<QuizState> emit,
   ) async {
-    emit(const QuizLoading());
+    emit(QuizLoading());
     print('Creating question for quiz ID: ${event.question.quizId}');
 
     // 1. Create question
@@ -154,7 +183,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     await result.fold(
       (error) async {
         print('Error creating question: $error');
-        emit(QuizError(error));
+        emit(QuizError(error.toString()));
         return null;
       },
       (questionId) async {
@@ -166,7 +195,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
         return await quizResult.fold(
           (error) {
             print('Error getting quiz: $error');
-            emit(QuizError(error));
+            emit(QuizError(error.toString()));
             return null;
           },
           (quiz) async {
@@ -184,7 +213,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
             return updateResult.fold(
               (error) {
                 print('Error updating quiz: $error');
-                emit(QuizError(error));
+                emit(QuizError(error.toString()));
                 return null;
               },
               (success) {
@@ -199,12 +228,11 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     );
   }
 
-
   Future<void> _onUpdateQuestion(
     UpdateQuestion event,
     Emitter<QuizState> emit,
   ) async {
-    emit(const QuizLoading());
+    emit(QuizLoading());
     print('QuizBloc: Updating question with ID: ${event.question.id}');
     print('QuizBloc: Question data: ${event.question}');
 
@@ -213,7 +241,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     result.fold(
       (error) {
         print('QuizBloc: Error updating question: $error');
-        emit(QuizError(error));
+        emit(QuizError(error.toString()));
       },
       (success) {
         print('QuizBloc: Question updated successfully');
@@ -226,7 +254,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     DeleteQuestion event,
     Emitter<QuizState> emit,
   ) async {
-    emit(const QuizLoading());
+    emit(QuizLoading());
     print('Deleting question with ID: ${event.questionId}');
 
     // 1. Get the question to find its quiz ID
@@ -235,7 +263,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
     await questionResult.fold(
       (error) async {
         print('Error getting question: $error');
-        emit(QuizError(error));
+        emit(QuizError(error.toString()));
         return null;
       },
       (question) async {
@@ -248,7 +276,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
         return await deleteResult.fold(
           (error) {
             print('Error deleting question: $error');
-            emit(QuizError(error));
+            emit(QuizError(error.toString()));
             return null;
           },
           (success) async {
@@ -258,7 +286,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
             return await quizResult.fold(
               (error) {
                 print('Error getting quiz: $error');
-                emit(QuizError(error));
+                emit(QuizError(error.toString()));
                 return null;
               },
               (quiz) async {
@@ -276,7 +304,7 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
                 return updateResult.fold(
                   (error) {
                     print('Error updating quiz: $error');
-                    emit(QuizError(error));
+                    emit(QuizError(error.toString()));
                     return null;
                   },
                   (success) {

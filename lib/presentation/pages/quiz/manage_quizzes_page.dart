@@ -12,126 +12,118 @@ import '../../../data/models/quiz_model.dart';
 import '../../../app/routes.dart';
 import '../../../main.dart';
 
-class ManageQuizzesPage extends StatelessWidget {
+class ManageQuizzesPage extends StatefulWidget {
   const ManageQuizzesPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Đảm bảo UserBloc đã được tải
-    if (context.read<UserBloc>().state is! UserProfileLoaded) {
-      final authState = context.read<AuthBloc>().state;
-      if (authState is Authenticated) {
-        context.read<UserBloc>().add(LoadUserProfile(authState.user.uid));
-      }
+  _ManageQuizzesPageState createState() => _ManageQuizzesPageState();
+}
+
+class _ManageQuizzesPageState extends State<ManageQuizzesPage> {
+  @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
     }
-    
-    return BlocProvider<QuizBloc>(
-      create: (context) => getIt<QuizBloc>(),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Quản lý bài học'),
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.of(context).pushNamed(AppRouter.createQuiz);
-              },
-              tooltip: 'Tạo bài học mới',
-            ),
-          ],
-        ),
-        body: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, authState) {
-            if (authState is Authenticated) {
-              return BlocConsumer<QuizBloc, QuizState>(
-                listener: (context, state) {
-                  if (state is QuizError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
+  }
+
+  void _refreshQuizzes() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      context.read<QuizBloc>().add(LoadQuizzes(creatorId: authState.user.uid));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Quản lý bài học'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRouter.createQuiz).then((_) {
+                _refreshQuizzes();
+              });
+            },
+            tooltip: 'Tạo bài học mới',
+          ),
+        ],
+      ),
+      body: BlocConsumer<QuizBloc, QuizState>(
+        listener: (context, state) {
+          if (state is QuizError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else if (state is QuizDeleted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Đã xóa bài học'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            _refreshQuizzes();
+          }
+        },
+        builder: (context, state) {
+          if (state is QuizLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (state is QuizzesLoaded) {
+            if (state.quizzes.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.quiz,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Chưa có bài học nào',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey.shade600,
                       ),
-                    );
-                  } else if (state is QuizDeleted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã xóa bài học'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    
-                    // Tải lại danh sách bài học
-                    context.read<QuizBloc>().add(LoadUserQuizzes(authState.user.uid));
-                  }
-                },
-                builder: (context, state) {
-                  if (state is QuizInitial) {
-                    // Tải danh sách bài học khi trang được tạo
-                    context.read<QuizBloc>().add(LoadUserQuizzes(authState.user.uid));
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (state is QuizLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (state is UserQuizzesLoaded) {
-                    final quizzes = state.quizzes;
-                    
-                    if (quizzes.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Bạn chưa có bài học nào',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).pushNamed(AppRouter.createQuiz);
-                              },
-                              icon: const Icon(Icons.add),
-                              label: const Text('Tạo bài học mới'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: quizzes.length,
-                      itemBuilder: (context, index) {
-                        final quiz = quizzes[index];
-                        return _buildQuizCard(context, quiz);
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRouter.createQuiz).then((_) {
+                          _refreshQuizzes();
+                        });
                       },
-                    );
-                  } else {
-                    return const Center(
-                      child: Text('Không thể tải danh sách bài học'),
-                    );
-                  }
-                },
-              );
-            } else {
-              return const Center(
-                child: Text('Vui lòng đăng nhập để quản lý bài học'),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Tạo bài học mới'),
+                    ),
+                  ],
+                ),
               );
             }
-          },
-        ),
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.quizzes.length,
+              itemBuilder: (context, index) {
+                return _buildQuizCard(context, state.quizzes[index]);
+              },
+            );
+          }
+          return const Center(
+            child: Text('Không thể tải danh sách bài học'),
+          );
+        },
       ),
     );
   }

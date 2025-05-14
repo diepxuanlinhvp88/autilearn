@@ -51,19 +51,6 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     // Navigate to the appropriate screen after animation
     Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
-        // Kiểm tra người dùng hiện tại
-        final user = _auth.currentUser;
-        if (user != null) {
-          print('SplashPage: Ensuring user exists in Firestore');
-          // Đảm bảo người dùng có trong Firestore
-          context.read<AuthBloc>().add(EnsureUserInFirestore(
-                userId: user.uid,
-                name: user.displayName,
-                email: user.email,
-                role: AppConstants.roleTeacher, // Mặc định là giáo viên
-              ));
-        }
-
         // Kiểm tra trạng thái đăng nhập
         context.read<AuthBloc>().add(const AuthCheckRequested());
       }

@@ -60,17 +60,34 @@ class _CalendarPageState extends State<CalendarPage> {
               return BlocConsumer<ScheduleBloc, ScheduleState>(
                 listener: (context, state) {
                   if (state is ScheduleError) {
+                    String errorMessage = state.message;
+                    
+                    // Kiểm tra nếu là lỗi index
+                    if (state.message.contains('The query requires an index')) {
+                      errorMessage = 'Đang chuẩn bị dữ liệu lịch học. Vui lòng thử lại sau vài phút.';
+                    }
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
+                        content: Text(errorMessage),
+                        backgroundColor: Colors.orange,
+                        duration: const Duration(seconds: 5),
+                        action: state.message.contains('The query requires an index')
+                            ? SnackBarAction(
+                                label: 'Thử lại',
+                                onPressed: () {
+                                  context.read<ScheduleBloc>().add(
+                                    LoadUserSchedules(authState.user.uid),
+                                  );
+                                },
+                              )
+                            : null,
                       ),
                     );
                   }
                 },
                 builder: (context, state) {
                   if (state is ScheduleInitial) {
-                    // Tải danh sách lịch học khi trang được tạo
                     context.read<ScheduleBloc>().add(LoadUserSchedules(authState.user.uid));
                     return const Center(
                       child: CircularProgressIndicator(),
@@ -81,6 +98,41 @@ class _CalendarPageState extends State<CalendarPage> {
                     );
                   } else if (state is UserSchedulesLoaded) {
                     final schedules = state.schedules;
+
+                    if (schedules.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.event_busy,
+                              size: 64,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Chưa có lịch học nào',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const CreateSchedulePage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Tạo lịch học mới'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
                     return CalendarView(
                       schedules: schedules,
@@ -99,11 +151,41 @@ class _CalendarPageState extends State<CalendarPage> {
                         );
                       },
                     );
-                  } else {
-                    return const Center(
-                      child: Text('Không thể tải lịch học'),
+                  } else if (state is ScheduleError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.red.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Không thể tải lịch học',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              context.read<ScheduleBloc>().add(
+                                LoadUserSchedules(authState.user.uid),
+                              );
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Thử lại'),
+                          ),
+                        ],
+                      ),
                     );
                   }
+                  return const Center(
+                    child: Text('Không thể tải lịch học'),
+                  );
                 },
               );
             } else {

@@ -6,46 +6,56 @@ class UserProgressModel extends Equatable {
   final String userId;
   final String quizId;
   final int score;
+  final bool isCompleted;
+  final DateTime? startedAt;
+  final DateTime? completedAt;
+  final Map<String, dynamic>? answers;
   final int totalQuestions;
-  final List<QuestionAttempt> attempts;
-  final DateTime completedAt;
+  final List<QuestionAttempt>? attempts;
   final int timeSpentSeconds;
   final int starsEarned;
+
+  int get points => score;
 
   const UserProgressModel({
     required this.id,
     required this.userId,
     required this.quizId,
     required this.score,
-    required this.totalQuestions,
-    required this.attempts,
-    required this.completedAt,
-    required this.timeSpentSeconds,
-    required this.starsEarned,
+    required this.isCompleted,
+    this.startedAt,
+    this.completedAt,
+    this.answers,
+    this.totalQuestions = 0,
+    this.attempts,
+    this.timeSpentSeconds = 0,
+    this.starsEarned = 0,
   });
 
   factory UserProgressModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     
-    List<QuestionAttempt> attempts = [];
+    // Parse attempts if available
+    List<QuestionAttempt>? attempts;
     if (data['attempts'] != null) {
-      attempts = List<QuestionAttempt>.from(
-        (data['attempts'] as List).map(
-          (attempt) => QuestionAttempt.fromMap(attempt),
-        ),
-      );
+      attempts = (data['attempts'] as List)
+          .map((item) => QuestionAttempt.fromMap(item as Map<String, dynamic>))
+          .toList();
     }
-
+    
     return UserProgressModel(
       id: doc.id,
-      userId: data['userId'] ?? '',
-      quizId: data['quizId'] ?? '',
-      score: data['score'] ?? 0,
-      totalQuestions: data['totalQuestions'] ?? 0,
+      userId: data['userId'] as String,
+      quizId: data['quizId'] as String,
+      score: data['score'] as int? ?? 0,
+      isCompleted: data['isCompleted'] as bool? ?? false,
+      startedAt: (data['startedAt'] as Timestamp?)?.toDate(),
+      completedAt: (data['completedAt'] as Timestamp?)?.toDate(),
+      answers: data['answers'] as Map<String, dynamic>?,
+      totalQuestions: data['totalQuestions'] as int? ?? 0,
       attempts: attempts,
-      completedAt: (data['completedAt'] as Timestamp).toDate(),
-      timeSpentSeconds: data['timeSpentSeconds'] ?? 0,
-      starsEarned: data['starsEarned'] ?? 0,
+      timeSpentSeconds: data['timeSpentSeconds'] as int? ?? 0,
+      starsEarned: data['starsEarned'] as int? ?? 0,
     );
   }
 
@@ -54,24 +64,28 @@ class UserProgressModel extends Equatable {
       'userId': userId,
       'quizId': quizId,
       'score': score,
+      'isCompleted': isCompleted,
+      'startedAt': startedAt != null ? Timestamp.fromDate(startedAt!) : null,
+      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'answers': answers,
       'totalQuestions': totalQuestions,
-      'attempts': attempts.map((attempt) => attempt.toMap()).toList(),
-      'completedAt': Timestamp.fromDate(completedAt),
+      'attempts': attempts?.map((a) => a.toMap()).toList(),
       'timeSpentSeconds': timeSpentSeconds,
       'starsEarned': starsEarned,
     };
   }
-
-  double get percentageScore => (score / totalQuestions) * 100;
 
   UserProgressModel copyWith({
     String? id,
     String? userId,
     String? quizId,
     int? score,
+    bool? isCompleted,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    Map<String, dynamic>? answers,
     int? totalQuestions,
     List<QuestionAttempt>? attempts,
-    DateTime? completedAt,
     int? timeSpentSeconds,
     int? starsEarned,
   }) {
@@ -80,9 +94,12 @@ class UserProgressModel extends Equatable {
       userId: userId ?? this.userId,
       quizId: quizId ?? this.quizId,
       score: score ?? this.score,
+      isCompleted: isCompleted ?? this.isCompleted,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      answers: answers ?? this.answers,
       totalQuestions: totalQuestions ?? this.totalQuestions,
       attempts: attempts ?? this.attempts,
-      completedAt: completedAt ?? this.completedAt,
       timeSpentSeconds: timeSpentSeconds ?? this.timeSpentSeconds,
       starsEarned: starsEarned ?? this.starsEarned,
     );
@@ -94,9 +111,12 @@ class UserProgressModel extends Equatable {
         userId,
         quizId,
         score,
+        isCompleted,
+        startedAt,
+        completedAt,
+        answers,
         totalQuestions,
         attempts,
-        completedAt,
         timeSpentSeconds,
         starsEarned,
       ];
