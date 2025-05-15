@@ -12,13 +12,19 @@ class ImgurService {
   // Tải ảnh lên Imgur và trả về URL
   Future<Either<String, String>> uploadImage(File imageFile) async {
     try {
+      print('ImgurService: Starting to upload image from file: ${imageFile.path}');
+      print('ImgurService: File exists: ${imageFile.existsSync()}, File size: ${await imageFile.length()} bytes');
+
       // Đọc file ảnh dưới dạng bytes
       final List<int> imageBytes = await imageFile.readAsBytes();
+      print('ImgurService: Read ${imageBytes.length} bytes from file');
 
       // Mã hóa bytes thành base64
       final String base64Image = base64Encode(imageBytes);
+      print('ImgurService: Encoded to base64 string with length: ${base64Image.length}');
 
       // Tạo request
+      print('ImgurService: Sending request to Imgur API');
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
@@ -32,8 +38,10 @@ class ImgurService {
       );
 
       // Kiểm tra response
+      print('ImgurService: Received response with status code: ${response.statusCode}');
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
+        print('ImgurService: Response data: $responseData');
 
         if (responseData['success'] == true) {
           // Lấy URL của ảnh đã tải lên
@@ -41,8 +49,9 @@ class ImgurService {
           print('ImgurService: Image uploaded successfully. URL: $imageUrl');
           return Right(imageUrl);
         } else {
+          final String errorMessage = responseData['data']?['error'] ?? 'Unknown error';
           print('ImgurService: Upload failed. Response: ${response.body}');
-          return Left('Không thể tải ảnh lên Imgur: ${responseData['data']['error']}');
+          return Left('Không thể tải ảnh lên Imgur: $errorMessage');
         }
       } else {
         print('ImgurService: Upload failed. Status code: ${response.statusCode}, Response: ${response.body}');

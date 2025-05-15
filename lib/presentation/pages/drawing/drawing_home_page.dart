@@ -124,8 +124,7 @@ class _DrawingHomePageState extends State<DrawingHomePage> with SingleTickerProv
           if (_tabController.index == 0) {
             _createNewFreeDrawing();
           } else {
-            // Không cần tạo mới cho tô màu theo mẫu
-            // Người dùng sẽ chọn từ danh sách mẫu có sẵn
+            _createNewTemplateDrawing();
           }
         },
         backgroundColor: Colors.purple,
@@ -144,16 +143,27 @@ class _DrawingHomePageState extends State<DrawingHomePage> with SingleTickerProv
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.brush, size: 64, color: Colors.grey),
+            Icon(
+              Icons.brush,
+              size: 64,
+              color: Colors.grey[400],
+            ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Bạn chưa có bài vẽ nào',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Nhấn nút + để tạo bài vẽ mới',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -164,6 +174,10 @@ class _DrawingHomePageState extends State<DrawingHomePage> with SingleTickerProv
                 backgroundColor: Colors.purple,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -191,20 +205,31 @@ class _DrawingHomePageState extends State<DrawingHomePage> with SingleTickerProv
     }
 
     if (_templates.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'Không có mẫu vẽ nào',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Icon(
+              Icons.image_not_supported,
+              size: 64,
+              color: Colors.grey[400],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 16),
             Text(
-              'Vui lòng thử lại sau',
-              style: TextStyle(color: Colors.grey),
+              'Không có mẫu tô màu nào',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Nhấn nút + để tạo mẫu tô màu mới',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
             ),
           ],
         ),
@@ -336,55 +361,100 @@ class _DrawingHomePageState extends State<DrawingHomePage> with SingleTickerProv
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Hình ảnh mẫu
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.network(
-                template.outlineImageUrl,
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.network(
+                    template.outlineImageUrl,
+                    height: 130,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 130,
+                      width: double.infinity,
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: Icon(Icons.image_not_supported, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Nhãn tự tạo
+                if (template.category == 'Tự tạo')
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.purple,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Tự tạo',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
 
             // Thông tin mẫu
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     template.title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(Icons.category, size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        template.category,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            template.category == 'Tự tạo' ? 'Mẫu tô màu' : template.category,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.purple,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       ...List.generate(
                         template.difficulty,
-                        (index) => const Icon(Icons.star, size: 14, color: Colors.amber),
+                        (index) => const Icon(Icons.star, size: 12, color: Colors.amber),
                       ),
                       ...List.generate(
                         5 - template.difficulty,
-                        (index) => const Icon(Icons.star_border, size: 14, color: Colors.amber),
+                        (index) => const Icon(Icons.star_border, size: 12, color: Colors.amber),
                       ),
                     ],
                   ),
@@ -511,5 +581,144 @@ class _DrawingHomePageState extends State<DrawingHomePage> with SingleTickerProv
         },
       );
     }
+  }
+
+  void _createNewTemplateDrawing() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! Authenticated) return;
+
+    final userId = authState.user.uid;
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final imageUrlController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tạo mẫu tô màu mới'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Tiêu đề',
+                  hintText: 'Nhập tiêu đề mẫu tô màu',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Mô tả',
+                  hintText: 'Nhập mô tả mẫu tô màu',
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: imageUrlController,
+                decoration: const InputDecoration(
+                  labelText: 'URL hình ảnh',
+                  hintText: 'Nhập URL hình ảnh mẫu',
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Lưu ý: Hình ảnh nên có nền trắng và đường viền rõ ràng để dễ tô màu',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              if (imageUrlController.text.isNotEmpty)
+                Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      imageUrlController.text,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Center(
+                        child: Icon(Icons.error, color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (titleController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Vui lòng nhập tiêu đề')),
+                );
+                return;
+              }
+
+              if (imageUrlController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Vui lòng nhập URL hình ảnh')),
+                );
+                return;
+              }
+
+              Navigator.pop(context);
+
+              // Hiển thị loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+
+              // Tạo mẫu tô màu mới
+              final templateResult = await _drawingService.createDrawingTemplate(
+                title: titleController.text.trim(),
+                description: descriptionController.text.trim(),
+                imageUrl: imageUrlController.text.trim(),
+                outlineImageUrl: imageUrlController.text.trim(),
+                creatorId: userId,
+                category: 'Tự tạo',
+                difficulty: 1,
+                isPublished: true,
+              );
+
+              // Đóng dialog loading
+              Navigator.pop(context);
+
+              templateResult.fold(
+                (failure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi: ${failure.message}')),
+                  );
+                },
+                (template) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tạo mẫu tô màu thành công')),
+                  );
+
+                  // Tải lại dữ liệu
+                  _loadData();
+                },
+              );
+            },
+            child: const Text('Tạo'),
+          ),
+        ],
+      ),
+    );
   }
 }

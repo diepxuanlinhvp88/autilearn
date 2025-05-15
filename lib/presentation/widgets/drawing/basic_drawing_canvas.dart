@@ -5,12 +5,14 @@ class BasicDrawingCanvas extends StatefulWidget {
   final Color selectedColor;
   final double strokeWidth;
   final Function() onDrawingChanged;
+  final bool isErasing; // Thêm trạng thái tẩy
 
   const BasicDrawingCanvas({
     Key? key,
     required this.selectedColor,
     required this.strokeWidth,
     required this.onDrawingChanged,
+    this.isErasing = false, // Mặc định là không tẩy
   }) : super(key: key);
 
   @override
@@ -47,14 +49,16 @@ class BasicDrawingCanvasState extends State<BasicDrawingCanvas> {
   void _onPanStart(DragStartDetails details) {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset localPosition = renderBox.globalToLocal(details.globalPosition);
-    
+
     setState(() {
       points.add(DrawingPoint(
         offset: localPosition,
         paint: Paint()
-          ..color = widget.selectedColor
+          ..color = widget.isErasing ? Colors.white : widget.selectedColor
           ..strokeWidth = widget.strokeWidth
-          ..strokeCap = StrokeCap.round,
+          ..strokeCap = StrokeCap.round
+          ..blendMode = widget.isErasing ? BlendMode.clear : BlendMode.srcOver,
+        isEraser: widget.isErasing,
       ));
     });
     widget.onDrawingChanged();
@@ -63,14 +67,16 @@ class BasicDrawingCanvasState extends State<BasicDrawingCanvas> {
   void _onPanUpdate(DragUpdateDetails details) {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset localPosition = renderBox.globalToLocal(details.globalPosition);
-    
+
     setState(() {
       points.add(DrawingPoint(
         offset: localPosition,
         paint: Paint()
-          ..color = widget.selectedColor
+          ..color = widget.isErasing ? Colors.white : widget.selectedColor
           ..strokeWidth = widget.strokeWidth
-          ..strokeCap = StrokeCap.round,
+          ..strokeCap = StrokeCap.round
+          ..blendMode = widget.isErasing ? BlendMode.clear : BlendMode.srcOver,
+        isEraser: widget.isErasing,
       ));
     });
     widget.onDrawingChanged();
@@ -134,9 +140,11 @@ class _DrawingPainter extends CustomPainter {
 class DrawingPoint {
   final Offset offset;
   final Paint paint;
+  final bool isEraser; // Thêm trạng thái tẩy cho điểm vẽ
 
   DrawingPoint({
     required this.offset,
     required this.paint,
+    this.isEraser = false, // Mặc định là không tẩy
   });
 }

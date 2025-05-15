@@ -33,39 +33,95 @@ class DrawingService {
     required String userId,
   }) async {
     try {
-      // Sử dụng RepaintBoundary để chuyển đổi widget thành hình ảnh
-      final RenderRepaintBoundary boundary = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      print('DrawingService: Starting to save drawing with ID: $drawingId');
 
-      if (byteData == null) {
-        return Left(ServerFailure('Không thể chuyển đổi hình ảnh'));
+      // Kiểm tra key có hợp lệ không
+      if (key.currentContext == null) {
+        print('DrawingService: Error - currentContext is null');
+        return Left(ServerFailure('Không thể tìm thấy context của canvas'));
       }
 
-      final Uint8List pngBytes = byteData.buffer.asUint8List();
+      // Kiểm tra RenderObject có hợp lệ không
+      final renderObject = key.currentContext!.findRenderObject();
+      if (renderObject == null) {
+        print('DrawingService: Error - renderObject is null');
+        return Left(ServerFailure('Không thể tìm thấy render object của canvas'));
+      }
 
-      // Lưu tạm thời vào bộ nhớ
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/drawing_$drawingId.png');
-      await tempFile.writeAsBytes(pngBytes);
+      if (renderObject is! RenderRepaintBoundary) {
+        print('DrawingService: Error - renderObject is not RenderRepaintBoundary');
+        return Left(ServerFailure('Render object không phải là RenderRepaintBoundary'));
+      }
 
-      // Tải lên Imgur
-      final uploadResult = await _imgurService.uploadImage(tempFile);
+      // Sử dụng RepaintBoundary để chuyển đổi widget thành hình ảnh
+      final RenderRepaintBoundary boundary = renderObject;
 
-      return uploadResult.fold(
-        (error) => Left(ServerFailure(error)),
-        (imageUrl) async {
-          // Cập nhật URL trong Firestore
-          await _firestore.collection('drawings').doc(drawingId).update({
-            'imageUrl': imageUrl,
-            'isCompleted': true,
-            'updatedAt': Timestamp.now(),
-          });
+      try {
+        print('DrawingService: Converting boundary to image');
+        final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+        print('DrawingService: Image created with size: ${image.width}x${image.height}');
 
-          return Right(imageUrl);
-        },
-      );
+        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData == null) {
+          print('DrawingService: Error - byteData is null');
+          return Left(ServerFailure('Không thể chuyển đổi hình ảnh'));
+        }
+
+        print('DrawingService: ByteData created with length: ${byteData.lengthInBytes}');
+        final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+        // Lưu tạm thời vào bộ nhớ
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/drawing_$drawingId.png');
+        await tempFile.writeAsBytes(pngBytes);
+        print('DrawingService: Temporary file saved at: ${tempFile.path}');
+
+        // Kiểm tra file có tồn tại và có nội dung không
+        if (!tempFile.existsSync()) {
+          print('DrawingService: Error - Temporary file does not exist');
+          return Left(ServerFailure('File tạm thời không tồn tại'));
+        }
+
+        final fileSize = await tempFile.length();
+        if (fileSize == 0) {
+          print('DrawingService: Error - Temporary file is empty');
+          return Left(ServerFailure('File tạm thời trống'));
+        }
+
+        print('DrawingService: Temporary file size: $fileSize bytes');
+
+        // Tải lên Imgur
+        print('DrawingService: Uploading to Imgur');
+        final uploadResult = await _imgurService.uploadImage(tempFile);
+
+        return uploadResult.fold(
+          (error) {
+            print('DrawingService: Imgur upload error: $error');
+            return Left(ServerFailure(error));
+          },
+          (imageUrl) async {
+            print('DrawingService: Imgur upload success. URL: $imageUrl');
+            // Cập nhật URL trong Firestore
+            try {
+              await _firestore.collection('drawings').doc(drawingId).update({
+                'imageUrl': imageUrl,
+                'isCompleted': true,
+                'updatedAt': Timestamp.now(),
+              });
+              print('DrawingService: Firestore updated successfully');
+              return Right(imageUrl);
+            } catch (firestoreError) {
+              print('DrawingService: Firestore update error: $firestoreError');
+              return Left(ServerFailure('Lỗi khi cập nhật Firestore: $firestoreError'));
+            }
+          },
+        );
+      } catch (imageError) {
+        print('DrawingService: Error converting to image: $imageError');
+        return Left(ServerFailure('Lỗi khi chuyển đổi thành hình ảnh: $imageError'));
+      }
     } catch (e) {
+      print('DrawingService: General error: $e');
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -174,6 +230,46 @@ class DrawingService {
       return Right(templates);
     } catch (e) {
       print('Error fetching drawing templates: $e');
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  // Tạo mẫu vẽ mới
+  Future<Either<Failure, DrawingTemplateModel>> createDrawingTemplate({
+    required String title,
+    required String description,
+    required String imageUrl,
+    required String outlineImageUrl,
+    required String creatorId,
+    required String category,
+    required int difficulty,
+    required bool isPublished,
+  }) async {
+    try {
+      // Tạo document mới trong collection drawing_templates
+      final docRef = _firestore.collection('drawing_templates').doc();
+
+      // Tạo model mẫu vẽ
+      final template = DrawingTemplateModel(
+        id: docRef.id,
+        title: title,
+        description: description,
+        imageUrl: imageUrl,
+        outlineImageUrl: outlineImageUrl,
+        creatorId: creatorId,
+        category: category,
+        difficulty: difficulty,
+        isPublished: isPublished,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Lưu vào Firestore
+      await docRef.set(template.toMap());
+
+      return Right(template);
+    } catch (e) {
+      print('Error creating drawing template: $e');
       return Left(ServerFailure(e.toString()));
     }
   }

@@ -6,7 +6,7 @@ import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../core/services/drawing_service.dart';
 import '../../../data/models/drawing_model.dart';
-import '../../../presentation/widgets/drawing/simple_canvas.dart';
+import '../../../presentation/widgets/drawing/basic_drawing_canvas.dart';
 import '../../../presentation/widgets/drawing/color_palette.dart';
 import '../../../presentation/widgets/drawing/brush_size_selector.dart';
 
@@ -24,7 +24,7 @@ class FreeDrawingPage extends StatefulWidget {
 
 class _FreeDrawingPageState extends State<FreeDrawingPage> {
   final DrawingService _drawingService = DrawingService();
-  final GlobalKey _canvasKey = GlobalKey();
+  final GlobalKey<BasicDrawingCanvasState> _canvasKey = GlobalKey<BasicDrawingCanvasState>();
 
   DrawingModel? _drawing;
   bool _isLoading = true;
@@ -33,6 +33,7 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
 
   Color _selectedColor = Colors.black;
   double _strokeWidth = 5.0;
+  bool _isErasing = false; // Thêm trạng thái tẩy
 
   @override
   void initState() {
@@ -73,6 +74,9 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
 
   Future<void> _saveDrawing() async {
     if (widget.drawingId == null || _drawing == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không tìm thấy thông tin bài vẽ')),
+      );
       return;
     }
 
@@ -80,47 +84,68 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
       _isSaving = true;
     });
 
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      final userId = authState.user.uid;
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is Authenticated) {
+        final userId = authState.user.uid;
 
-      final result = await _drawingService.saveDrawing(
-        key: _canvasKey,
-        drawingId: widget.drawingId!,
-        userId: userId,
-      );
+        print('FreeDrawingPage: Saving drawing with ID: ${widget.drawingId}');
+        print('FreeDrawingPage: Canvas key valid: ${_canvasKey.currentContext != null}');
 
-      result.fold(
-        (failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi: ${failure.message}')),
-          );
-          setState(() {
-            _isSaving = false;
-          });
-        },
-        (imageUrl) {
-          setState(() {
-            _isSaving = false;
-            _hasChanges = false;
-            _drawing = _drawing!.copyWith(
-              imageUrl: imageUrl,
-              isCompleted: true,
+        // Đảm bảo RepaintBoundary đã được render
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        final result = await _drawingService.saveDrawing(
+          key: _canvasKey,
+          drawingId: widget.drawingId!,
+          userId: userId,
+        );
+
+        result.fold(
+          (failure) {
+            print('FreeDrawingPage: Error saving drawing: ${failure.message}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Lỗi: ${failure.message}')),
             );
-          });
+            setState(() {
+              _isSaving = false;
+            });
+          },
+          (imageUrl) {
+            print('FreeDrawingPage: Drawing saved successfully. URL: $imageUrl');
+            setState(() {
+              _isSaving = false;
+              _hasChanges = false;
+              _drawing = _drawing!.copyWith(
+                imageUrl: imageUrl,
+                isCompleted: true,
+              );
+            });
 
-          // Hiển thị kết quả
-          Navigator.of(context).pushReplacementNamed(
-            AppRouter.drawingResult,
-            arguments: {
-              'score': 100,
-              'drawingId': widget.drawingId,
-              'drawingType': AppConstants.freeDrawing,
-            },
-          );
-        },
+            // Hiển thị kết quả
+            Navigator.of(context).pushReplacementNamed(
+              AppRouter.drawingResult,
+              arguments: {
+                'score': 100,
+                'drawingId': widget.drawingId,
+                'drawingType': AppConstants.freeDrawing,
+              },
+            );
+          },
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bạn chưa đăng nhập')),
+        );
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    } catch (e) {
+      print('FreeDrawingPage: Unexpected error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi không xác định: $e')),
       );
-    } else {
       setState(() {
         _isSaving = false;
       });
@@ -161,14 +186,16 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
                           spreadRadius: 1,
                         ),
                       ],
+                      border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
                     ),
                     child: RepaintBoundary(
                       key: _canvasKey,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: SimpleCanvas(
-                          color: _selectedColor,
+                        child: BasicDrawingCanvas(
+                          selectedColor: _selectedColor,
                           strokeWidth: _strokeWidth,
+                          isErasing: _isErasing, // Truyền trạng thái tẩy
                           onDrawingChanged: () {
                             setState(() {
                               _hasChanges = true;
@@ -196,14 +223,47 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
                   ),
                   child: Column(
                     children: [
-                      // Bảng màu
-                      ColorPalette(
-                        selectedColor: _selectedColor,
-                        onColorSelected: (color) {
-                          setState(() {
-                            _selectedColor = color;
-                          });
-                        },
+                      // Bảng màu và công cụ
+                      Row(
+                        children: [
+                          // Bảng màu
+                          Expanded(
+                            child: ColorPalette(
+                              selectedColor: _selectedColor,
+                              onColorSelected: (color) {
+                                setState(() {
+                                  _selectedColor = color;
+                                  _isErasing = false; // Tắt chế độ tẩy khi chọn màu
+                                });
+                              },
+                            ),
+                          ),
+
+                          // Nút tẩy
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isErasing = !_isErasing; // Bật/tắt chế độ tẩy
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: _isErasing ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _isErasing ? Colors.blue : Colors.grey,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.auto_fix_high,
+                                color: _isErasing ? Colors.blue : Colors.grey,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 16),
@@ -226,8 +286,8 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
                         children: [
                           ElevatedButton.icon(
                             onPressed: () {
-                              if (_canvasKey.currentState != null && _canvasKey.currentWidget is SimpleCanvas) {
-                                final canvasState = (_canvasKey.currentState as SimpleCanvasState);
+                              if (_canvasKey.currentState != null && _canvasKey.currentWidget is BasicDrawingCanvas) {
+                                final canvasState = (_canvasKey.currentState as BasicDrawingCanvasState);
                                 canvasState.clear();
                               }
                             },

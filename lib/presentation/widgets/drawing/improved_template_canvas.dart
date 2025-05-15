@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/imgur_service.dart';
 
-class BasicTemplateCanvas extends StatefulWidget {
+class ImprovedTemplateCanvas extends StatefulWidget {
   final Color selectedColor;
   final double strokeWidth;
   final String outlineImageUrl;
   final Function() onDrawingChanged;
 
-  const BasicTemplateCanvas({
+  const ImprovedTemplateCanvas({
     Key? key,
     required this.selectedColor,
     required this.strokeWidth,
@@ -18,42 +18,38 @@ class BasicTemplateCanvas extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  BasicTemplateCanvasState createState() => BasicTemplateCanvasState();
+  ImprovedTemplateCanvasState createState() => ImprovedTemplateCanvasState();
 }
 
-class BasicTemplateCanvasState extends State<BasicTemplateCanvas> {
+class ImprovedTemplateCanvasState extends State<ImprovedTemplateCanvas> {
   final List<DrawingPoint?> points = [];
   bool isImageLoaded = false;
   final ImgurService _imgurService = ImgurService();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onPanStart: _onPanStart,
-      onPanUpdate: _onPanUpdate,
-      onPanEnd: _onPanEnd,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // White background
-            Container(
-              color: Colors.white,
-            ),
-
-            // Drawing canvas
-            if (isImageLoaded)
-              CustomPaint(
-                painter: _DrawingPainter(
-                  points: points,
-                  color: widget.selectedColor,
-                  strokeWidth: widget.strokeWidth,
-                ),
-                size: Size.infinite,
+    return Container(
+      color: Colors.white,
+      child: Stack(
+        children: [
+          // Canvas vẽ
+          GestureDetector(
+            onPanStart: _onPanStart,
+            onPanUpdate: _onPanUpdate,
+            onPanEnd: _onPanEnd,
+            child: CustomPaint(
+              painter: _DrawingPainter(
+                points: points,
+                color: widget.selectedColor,
+                strokeWidth: widget.strokeWidth,
               ),
-
-            // Background image (template) with transparency
-            Positioned.fill(
+              size: Size.infinite,
+            ),
+          ),
+          
+          // Hình ảnh mẫu với độ trong suốt
+          Positioned.fill(
+            child: IgnorePointer(
               child: CachedNetworkImage(
                 imageUrl: _imgurService.getDirectImageUrl(widget.outlineImageUrl),
                 fit: BoxFit.contain,
@@ -67,7 +63,7 @@ class BasicTemplateCanvasState extends State<BasicTemplateCanvas> {
                   );
                 },
                 imageBuilder: (context, imageProvider) {
-                  // Mark image as loaded
+                  // Đánh dấu hình ảnh đã tải xong
                   if (!isImageLoaded) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       setState(() {
@@ -76,7 +72,7 @@ class BasicTemplateCanvasState extends State<BasicTemplateCanvas> {
                     });
                   }
                   return Opacity(
-                    opacity: 0.5, // Make the template semi-transparent
+                    opacity: 0.3, // Độ trong suốt cao hơn để thấy rõ nét vẽ
                     child: Image(
                       image: imageProvider,
                       fit: BoxFit.contain,
@@ -85,18 +81,18 @@ class BasicTemplateCanvasState extends State<BasicTemplateCanvas> {
                 },
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   void _onPanStart(DragStartDetails details) {
     if (!isImageLoaded) return;
-
+    
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset localPosition = renderBox.globalToLocal(details.globalPosition);
-
+    
     setState(() {
       points.add(DrawingPoint(
         offset: localPosition,
@@ -111,10 +107,10 @@ class BasicTemplateCanvasState extends State<BasicTemplateCanvas> {
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (!isImageLoaded) return;
-
+    
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset localPosition = renderBox.globalToLocal(details.globalPosition);
-
+    
     setState(() {
       points.add(DrawingPoint(
         offset: localPosition,
@@ -129,9 +125,9 @@ class BasicTemplateCanvasState extends State<BasicTemplateCanvas> {
 
   void _onPanEnd(DragEndDetails details) {
     if (!isImageLoaded) return;
-
+    
     setState(() {
-      points.add(null); // Add null to indicate end of a line
+      points.add(null); // Thêm null để đánh dấu kết thúc đường vẽ
     });
     widget.onDrawingChanged();
   }
@@ -157,22 +153,38 @@ class _DrawingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Vẽ nền trắng
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = Colors.white,
+    );
+    
+    // Vẽ các nét vẽ
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != null && points[i + 1] != null) {
-        // Draw line between points
+        // Vẽ đường giữa các điểm
         canvas.drawLine(
           points[i]!.offset,
           points[i + 1]!.offset,
           points[i]!.paint,
         );
       } else if (points[i] != null && points[i + 1] == null) {
-        // Draw point
+        // Vẽ điểm đơn
         canvas.drawPoints(
           PointMode.points,
           [points[i]!.offset],
           points[i]!.paint,
         );
       }
+    }
+    
+    // Vẽ điểm cuối cùng nếu có
+    if (points.isNotEmpty && points.last != null) {
+      canvas.drawPoints(
+        PointMode.points,
+        [points.last!.offset],
+        points.last!.paint,
+      );
     }
   }
 

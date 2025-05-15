@@ -7,7 +7,7 @@ import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../core/services/drawing_service.dart';
 import '../../../data/models/drawing_model.dart';
 import '../../../data/models/drawing_template_model.dart';
-import '../../../presentation/widgets/drawing/basic_template_canvas.dart';
+import '../../../presentation/widgets/drawing/simple_template_canvas.dart';
 import '../../../presentation/widgets/drawing/color_palette.dart';
 import '../../../presentation/widgets/drawing/brush_size_selector.dart';
 
@@ -25,7 +25,7 @@ class TemplateDrawingPage extends StatefulWidget {
 
 class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
   final DrawingService _drawingService = DrawingService();
-  final GlobalKey _canvasKey = GlobalKey();
+  final GlobalKey<SimpleTemplateCanvasState> _canvasKey = GlobalKey<SimpleTemplateCanvasState>();
 
   DrawingModel? _drawing;
   DrawingTemplateModel? _template;
@@ -35,6 +35,7 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
 
   Color _selectedColor = Colors.red;
   double _strokeWidth = 10.0;
+  bool _isErasing = false; // Thêm trạng thái tẩy
 
   @override
   void initState() {
@@ -114,6 +115,9 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
 
   Future<void> _saveDrawing() async {
     if (_drawing == null || _template == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không tìm thấy thông tin bài vẽ')),
+      );
       return;
     }
 
@@ -121,47 +125,68 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
       _isSaving = true;
     });
 
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      final userId = authState.user.uid;
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is Authenticated) {
+        final userId = authState.user.uid;
 
-      final result = await _drawingService.saveDrawing(
-        key: _canvasKey,
-        drawingId: _drawing!.id,
-        userId: userId,
-      );
+        print('TemplateDrawingPage: Saving drawing with ID: ${_drawing!.id}');
+        print('TemplateDrawingPage: Canvas key valid: ${_canvasKey.currentContext != null}');
 
-      result.fold(
-        (failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi: ${failure.message}')),
-          );
-          setState(() {
-            _isSaving = false;
-          });
-        },
-        (imageUrl) {
-          setState(() {
-            _isSaving = false;
-            _hasChanges = false;
-            _drawing = _drawing!.copyWith(
-              imageUrl: imageUrl,
-              isCompleted: true,
+        // Đảm bảo RepaintBoundary đã được render
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        final result = await _drawingService.saveDrawing(
+          key: _canvasKey,
+          drawingId: _drawing!.id,
+          userId: userId,
+        );
+
+        result.fold(
+          (failure) {
+            print('TemplateDrawingPage: Error saving drawing: ${failure.message}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Lỗi: ${failure.message}')),
             );
-          });
+            setState(() {
+              _isSaving = false;
+            });
+          },
+          (imageUrl) {
+            print('TemplateDrawingPage: Drawing saved successfully. URL: $imageUrl');
+            setState(() {
+              _isSaving = false;
+              _hasChanges = false;
+              _drawing = _drawing!.copyWith(
+                imageUrl: imageUrl,
+                isCompleted: true,
+              );
+            });
 
-          // Hiển thị kết quả
-          Navigator.of(context).pushReplacementNamed(
-            AppRouter.drawingResult,
-            arguments: {
-              'score': 100,
-              'drawingId': _drawing!.id,
-              'drawingType': AppConstants.templateDrawing,
-            },
-          );
-        },
+            // Hiển thị kết quả
+            Navigator.of(context).pushReplacementNamed(
+              AppRouter.drawingResult,
+              arguments: {
+                'score': 100,
+                'drawingId': _drawing!.id,
+                'drawingType': AppConstants.templateDrawing,
+              },
+            );
+          },
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bạn chưa đăng nhập')),
+        );
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    } catch (e) {
+      print('TemplateDrawingPage: Unexpected error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi không xác định: $e')),
       );
-    } else {
       setState(() {
         _isSaving = false;
       });
@@ -202,15 +227,17 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
                           spreadRadius: 1,
                         ),
                       ],
+                      border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
                     ),
                     child: RepaintBoundary(
                       key: _canvasKey,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: BasicTemplateCanvas(
+                        child: SimpleTemplateCanvas(
                           selectedColor: _selectedColor,
                           strokeWidth: _strokeWidth,
                           outlineImageUrl: _template!.outlineImageUrl,
+                          isErasing: _isErasing, // Truyền trạng thái tẩy
                           onDrawingChanged: () {
                             setState(() {
                               _hasChanges = true;
@@ -238,14 +265,47 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
                   ),
                   child: Column(
                     children: [
-                      // Bảng màu
-                      ColorPalette(
-                        selectedColor: _selectedColor,
-                        onColorSelected: (color) {
-                          setState(() {
-                            _selectedColor = color;
-                          });
-                        },
+                      // Bảng màu và công cụ
+                      Row(
+                        children: [
+                          // Bảng màu
+                          Expanded(
+                            child: ColorPalette(
+                              selectedColor: _selectedColor,
+                              onColorSelected: (color) {
+                                setState(() {
+                                  _selectedColor = color;
+                                  _isErasing = false; // Tắt chế độ tẩy khi chọn màu
+                                });
+                              },
+                            ),
+                          ),
+
+                          // Nút tẩy
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isErasing = !_isErasing; // Bật/tắt chế độ tẩy
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: _isErasing ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _isErasing ? Colors.blue : Colors.grey,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.auto_fix_high,
+                                color: _isErasing ? Colors.blue : Colors.grey,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 16),
@@ -268,9 +328,8 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
                         children: [
                           ElevatedButton.icon(
                             onPressed: () {
-                              if (_canvasKey.currentState != null && _canvasKey.currentWidget is BasicTemplateCanvas) {
-                                final canvasState = (_canvasKey.currentState as BasicTemplateCanvasState);
-                                canvasState.clear();
+                              if (_canvasKey.currentState != null) {
+                                _canvasKey.currentState!.clear();
                               }
                             },
                             icon: const Icon(Icons.clear),
