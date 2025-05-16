@@ -24,6 +24,7 @@ class FreeDrawingPage extends StatefulWidget {
 
 class _FreeDrawingPageState extends State<FreeDrawingPage> {
   final DrawingService _drawingService = DrawingService();
+  final GlobalKey _repaintBoundaryKey = GlobalKey();
   final GlobalKey<BasicDrawingCanvasState> _canvasKey = GlobalKey<BasicDrawingCanvasState>();
 
   DrawingModel? _drawing;
@@ -96,7 +97,7 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
         await Future.delayed(const Duration(milliseconds: 500));
 
         final result = await _drawingService.saveDrawing(
-          key: _canvasKey,
+          key: _repaintBoundaryKey,
           drawingId: widget.drawingId!,
           userId: userId,
         );
@@ -189,10 +190,11 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
                       border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
                     ),
                     child: RepaintBoundary(
-                      key: _canvasKey,
+                      key: _repaintBoundaryKey,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: BasicDrawingCanvas(
+                          key: _canvasKey,
                           selectedColor: _selectedColor,
                           strokeWidth: _strokeWidth,
                           isErasing: _isErasing, // Truyền trạng thái tẩy
@@ -291,11 +293,17 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
                                 canvasState.clear();
                               }
                             },
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(Icons.delete_outline, size: 22),
                             label: const Text('Xóa tất cả'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.red.shade50,
+                              foregroundColor: Colors.red,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.red.shade200),
+                              ),
                             ),
                           ),
                           ElevatedButton.icon(
@@ -309,11 +317,16 @@ class _FreeDrawingPageState extends State<FreeDrawingPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.check),
+                                : const Icon(Icons.check, size: 22),
                             label: const Text('Hoàn thành'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
+                              elevation: 2,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],

@@ -36,11 +36,9 @@ class BasicDrawingCanvasState extends State<BasicDrawingCanvas> {
             color: widget.selectedColor,
             strokeWidth: widget.strokeWidth,
           ),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: Colors.white,
-          ),
+          size: Size.infinite,
+          isComplex: true,
+          willChange: true,
         ),
       ),
     );
@@ -110,30 +108,45 @@ class _DrawingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Vẽ nền trắng
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = Colors.white,
+    );
+
+    // Vẽ các đường
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != null && points[i + 1] != null) {
-        // Draw line between points
+        // Vẽ đường giữa các điểm
         canvas.drawLine(
           points[i]!.offset,
           points[i + 1]!.offset,
           points[i]!.paint,
         );
       } else if (points[i] != null && points[i + 1] == null) {
-        // Draw point
-        canvas.drawPoints(
-          PointMode.points,
-          [points[i]!.offset],
+        // Vẽ điểm đơn
+        canvas.drawCircle(
+          points[i]!.offset,
+          points[i]!.paint.strokeWidth / 2,
           points[i]!.paint,
         );
       }
+    }
+
+    // Vẽ điểm cuối cùng nếu có
+    if (points.isNotEmpty && points.last != null) {
+      canvas.drawCircle(
+        points.last!.offset,
+        points.last!.paint.strokeWidth / 2,
+        points.last!.paint,
+      );
     }
   }
 
   @override
   bool shouldRepaint(_DrawingPainter oldDelegate) {
-    return oldDelegate.points != points ||
-        oldDelegate.color != color ||
-        oldDelegate.strokeWidth != strokeWidth;
+    // Always repaint to ensure drawing is visible
+    return true;
   }
 }
 

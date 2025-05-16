@@ -4,6 +4,7 @@ import '../../../main.dart';
 import '../../../presentation/blocs/auth/auth_bloc.dart';
 import '../../../presentation/blocs/auth/auth_state.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../app/routes.dart';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -14,7 +15,7 @@ class ProgressPage extends StatefulWidget {
 
 class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Sample progress data
   final List<Map<String, dynamic>> _quizProgress = [
     {
@@ -63,7 +64,7 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
       'timeSpentSeconds': 220,
     },
   ];
-  
+
   // Weekly activity data
   final List<Map<String, dynamic>> _weeklyActivity = [
     {'day': 'T2', 'quizzes': 2, 'score': 15},
@@ -115,9 +116,41 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
                 children: [
                   // Activity tab
                   _buildActivityTab(),
-                  
+
                   // Statistics tab
                   _buildStatisticsTab(),
+                ],
+              ),
+              bottomNavigationBar: BottomNavigationBar(
+                currentIndex: 2, // Index for profile tab
+                onTap: (index) {
+                  if (index != 2) { // If not profile tab
+                    Navigator.of(context).pushReplacementNamed(AppRouter.home);
+                    // Sau khi chuyển đến trang Home, cần cập nhật selectedIndex
+                    // Điều này sẽ được xử lý trong HomePage
+                  }
+                },
+                selectedItemColor: Colors.blue,
+                unselectedItemColor: Colors.grey,
+                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                type: BottomNavigationBarType.fixed,
+                elevation: 10,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    activeIcon: Icon(Icons.home_filled),
+                    label: 'Trang chủ',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.quiz_outlined),
+                    activeIcon: Icon(Icons.quiz),
+                    label: 'Bài học',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person_outline),
+                    activeIcon: Icon(Icons.person),
+                    label: 'Hồ sơ',
+                  ),
                 ],
               ),
             );
@@ -173,8 +206,8 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
                                 Container(
                                   height: height,
                                   decoration: BoxDecoration(
-                                    color: day['quizzes'] > 0 
-                                        ? Colors.purple 
+                                    color: day['quizzes'] > 0
+                                        ? Colors.purple
                                         : Colors.grey.shade300,
                                     borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(8),
@@ -207,9 +240,9 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Recent activities
           const Text(
             'Hoạt động gần đây',
@@ -219,7 +252,7 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
             ),
           ),
           const SizedBox(height: 16),
-          
+
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -239,15 +272,15 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
     int totalQuizzes = _quizProgress.length;
     int totalQuestions = _quizProgress.fold(0, (sum, item) => sum + (item['totalQuestions'] as int));
     int totalCorrect = _quizProgress.fold(0, (sum, item) => sum + (item['score'] as int));
-    double averageScore = totalQuizzes > 0 
-        ? _quizProgress.fold(0.0, (sum, item) => sum + (item['score'] as int) / (item['totalQuestions'] as int)) / totalQuizzes 
+    double averageScore = totalQuizzes > 0
+        ? _quizProgress.fold(0.0, (sum, item) => sum + (item['score'] as int) / (item['totalQuestions'] as int)) / totalQuizzes
         : 0.0;
-    
+
     // Count by quiz type
     int choicesCount = _quizProgress.where((q) => q['type'] == AppConstants.choicesQuiz).length;
     int pairingCount = _quizProgress.where((q) => q['type'] == AppConstants.pairingQuiz).length;
     int sequentialCount = _quizProgress.where((q) => q['type'] == AppConstants.sequentialQuiz).length;
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -324,9 +357,9 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Quiz types distribution
           Card(
             elevation: 2,
@@ -370,9 +403,9 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Average score
           Card(
             elevation: 2,
@@ -446,10 +479,10 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
     final double percentage = score / total;
     final String formattedDate = _formatDate(progress['completedAt']);
     final String formattedTime = _formatTime(progress['timeSpentSeconds']);
-    
+
     Color typeColor;
     IconData typeIcon;
-    
+
     switch (progress['type']) {
       case AppConstants.choicesQuiz:
         typeColor = Colors.blue;
@@ -467,7 +500,7 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
         typeColor = Colors.purple;
         typeIcon = Icons.quiz;
     }
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -599,7 +632,7 @@ class _ProgressPageState extends State<ProgressPage> with SingleTickerProviderSt
     required Color color,
   }) {
     final double percentage = total > 0 ? count / total : 0;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

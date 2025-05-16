@@ -25,6 +25,7 @@ class TemplateDrawingPage extends StatefulWidget {
 
 class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
   final DrawingService _drawingService = DrawingService();
+  final GlobalKey _repaintBoundaryKey = GlobalKey();
   final GlobalKey<SimpleTemplateCanvasState> _canvasKey = GlobalKey<SimpleTemplateCanvasState>();
 
   DrawingModel? _drawing;
@@ -137,7 +138,7 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
         await Future.delayed(const Duration(milliseconds: 500));
 
         final result = await _drawingService.saveDrawing(
-          key: _canvasKey,
+          key: _repaintBoundaryKey,
           drawingId: _drawing!.id,
           userId: userId,
         );
@@ -230,10 +231,11 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
                       border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
                     ),
                     child: RepaintBoundary(
-                      key: _canvasKey,
+                      key: _repaintBoundaryKey,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: SimpleTemplateCanvas(
+                          key: _canvasKey,
                           selectedColor: _selectedColor,
                           strokeWidth: _strokeWidth,
                           outlineImageUrl: _template!.outlineImageUrl,
@@ -332,11 +334,17 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
                                 _canvasKey.currentState!.clear();
                               }
                             },
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(Icons.delete_outline, size: 22),
                             label: const Text('Xóa tất cả'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.red.shade50,
+                              foregroundColor: Colors.red,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.red.shade200),
+                              ),
                             ),
                           ),
                           ElevatedButton.icon(
@@ -350,11 +358,16 @@ class _TemplateDrawingPageState extends State<TemplateDrawingPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.check),
+                                : const Icon(Icons.check, size: 22),
                             label: const Text('Hoàn thành'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
+                              elevation: 2,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
